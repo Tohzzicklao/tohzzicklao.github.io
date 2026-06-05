@@ -3,20 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="José Antonio Nicolás Navarro — Data Scientist & AI Engineer. MSc en IA y Ciberseguridad. Portfolio profesional.">
-    <meta name="keywords" content="Data Scientist, AI Engineer, Machine Learning, Deep Learning, Cybersecurity, Python, portfolio">
-    <meta property="og:title" content="José Antonio Nicolás Navarro | Data Scientist & AI Engineer">
+    <meta name="description" content="José Antonio Nicolás Navarro — Data Scientist & AI Engineer. Blog y portfolio profesional.">
+    <meta property="og:title" content="José Antonio Nicolás Navarro | Blog & CV">
     <meta property="og:description" content="AI R&D Engineer · MSc in AI & Cybersecurity · Deep Learning · Ciberseguridad">
     <meta property="og:image" content="https://avatars.githubusercontent.com/u/38398146?v=4">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary">
-    <title>José Antonio Nicolás | Data Scientist & AI Engineer</title>
+    <title>José Antonio Nicolás | Blog & CV</title>
     <style>
         :root {
             --bg: #020212;
             --surface: rgba(10, 10, 30, 0.85);
             --surface2: rgba(20, 20, 50, 0.65);
-            --border: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.06);
             --text: #e8e8f4;
             --muted: #9292b4;
             --accent: #7c3aed;
@@ -25,7 +22,6 @@
             --green: #10b981;
             --blue: #3b82f6;
             --rose: #f43f5e;
-            --amber: #f59e0b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,178 +36,179 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ── Canvas background ── */
+        /* ── Stars ── */
         #stars {
-            position: fixed;
-            top: 0; left: 0;
+            position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 0;
+            pointer-events: none; z-index: 0;
         }
 
-        /* ══════════ HERO ══════════ */
-        .hero {
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
+        /* ══════════ NAV ══════════ */
+        .nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(2,2,18,0.75);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 2rem;
+            gap: 0.4rem;
+            height: 56px;
+        }
+        .nav-tab {
+            padding: 0.5rem 1.3rem;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            transition: all 0.25s ease;
+            letter-spacing: 0.01em;
+        }
+        .nav-tab:hover { color: #fff; background: rgba(255,255,255,0.04); }
+        .nav-tab.active {
+            color: #fff;
+            background: rgba(124,58,237,0.15);
+        }
+        .nav-ext {
+            margin-left: auto;
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .nav-ext a {
+            color: var(--muted);
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .nav-ext a:hover { color: #fff; }
+        .nav-ext svg { width: 18px; height: 18px; }
+
+        @media (max-width: 500px) {
+            .nav { padding: 0 1rem; gap: 0.15rem; }
+            .nav-tab { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+            .nav-ext { gap: 0.5rem; }
         }
 
-        .avatar-wrap {
-            position: relative;
-            margin-bottom: 2rem;
+        /* ══════════ HERO (compact) ══════════ */
+        .hero {
+            position: relative; z-index: 1;
+            padding: 7rem 2rem 4rem;
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
         }
-        .avatar {
-            width: 150px;
-            height: 150px;
+        .hero .avatar {
+            width: 90px; height: 90px;
             border-radius: 50%;
             object-fit: cover;
-            position: relative;
-            z-index: 1;
-            box-shadow: 0 0 50px var(--glow), 0 0 100px rgba(124,58,237,0.1);
-            transition: transform 0.45s ease, box-shadow 0.45s ease;
-        }
-        .avatar-ring {
-            position: absolute;
-            inset: -7px;
-            border-radius: 50%;
-            background: conic-gradient(from 0deg, var(--accent), var(--blue), var(--green), var(--rose), var(--accent));
-            animation: spin 5s linear infinite;
-            z-index: 0;
-        }
-        .avatar-ring-inner {
-            position: absolute;
-            inset: -1px;
-            border-radius: 50%;
-            background: var(--bg);
-            z-index: 0;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .avatar-wrap:hover .avatar {
-            transform: scale(1.05);
-            box-shadow: 0 0 70px var(--glow), 0 0 140px rgba(124,58,237,0.2);
-        }
-
-        .hero .badge-row {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            justify-content: center;
+            box-shadow: 0 0 40px var(--glow);
             margin-bottom: 1.2rem;
-            animation: fadeUp 0.8s ease-out 0.1s both;
+            transition: transform 0.4s ease;
         }
-        .badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.3rem 0.8rem;
-            border-radius: 50px;
-            letter-spacing: 0.02em;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.03);
-            color: var(--muted);
-        }
-        .badge.accent {
-            background: rgba(124,58,237,0.15);
-            border-color: rgba(124,58,237,0.25);
-            color: var(--accent2);
-        }
-
+        .hero .avatar:hover { transform: scale(1.06); }
         .hero h1 {
-            font-size: clamp(2.8rem, 6.5vw, 5rem);
+            font-size: clamp(2rem, 5vw, 3.2rem);
             font-weight: 800;
-            letter-spacing: -0.04em;
-            background: linear-gradient(135deg, #ffffff 0%, #d8d4ff 40%, var(--accent2) 70%, #67e8f9 100%);
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #fff 0%, #d8d4ff 50%, var(--accent2) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            line-height: 1.1;
-            margin-bottom: 0.6rem;
-            animation: fadeUp 0.8s ease-out 0.2s both;
+            margin-bottom: 0.4rem;
         }
-        .hero .title-line {
-            font-size: 1.15rem;
+        .hero .sub {
             color: var(--muted);
+            font-size: 1rem;
             font-weight: 500;
-            animation: fadeUp 0.8s ease-out 0.3s both;
-            max-width: 500px;
-        }
-        .hero .loc {
-            font-size: 0.9rem;
-            color: var(--muted);
-            opacity: 0.6;
-            margin-bottom: 2rem;
-            animation: fadeUp 0.8s ease-out 0.35s both;
         }
 
-        .hero-btns {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            animation: fadeUp 0.8s ease-out 0.4s both;
+        /* ══════════ TAB CONTENT ══════════ */
+        .tab-content {
+            display: none;
+            position: relative; z-index: 1;
         }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.55rem;
-            padding: 0.8rem 2rem;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
-            cursor: pointer;
-            border: none;
-            letter-spacing: 0.01em;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent), #6366f1);
-            color: #fff;
-            box-shadow: 0 4px 30px rgba(124,58,237,0.35);
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 40px rgba(124,58,237,0.5);
-        }
-        .btn-outline {
-            background: transparent;
-            color: var(--text);
-            border: 1.5px solid rgba(255,255,255,0.12);
-        }
-        .btn-outline:hover {
-            border-color: var(--accent2);
-            background: rgba(124,58,237,0.06);
-            transform: translateY(-3px);
-        }
+        .tab-content.active { display: block; }
 
-        .scroll-ind {
-            position: absolute;
-            bottom: 2.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            animation: fadeUp 0.8s ease-out 0.7s both, bob 2s ease-in-out infinite;
-        }
-        @keyframes bob {
-            0%,100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(12px); }
-        }
-        .scroll-ind svg { width: 22px; height: 22px; opacity: 0.35; color: var(--muted); }
-
-        /* ══════════ SECTIONS ══════════ */
-        section {
-            position: relative;
-            z-index: 1;
-            max-width: 920px;
+        /* ── BLOG ── */
+        .blog {
+            max-width: 720px;
             margin: 0 auto;
-            padding: 5rem 2rem;
+            padding: 0 2rem 5rem;
         }
-        section + section { border-top: 1px solid var(--border); }
+        .blog .sec-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent2);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .post {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.8rem;
+            margin-bottom: 1.2rem;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: border-color 0.3s, transform 0.3s;
+        }
+        .post:hover {
+            border-color: rgba(124,58,237,0.25);
+            transform: translateY(-2px);
+        }
+        .post .date {
+            font-size: 0.75rem;
+            color: var(--accent2);
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.5rem;
+        }
+        .post h3 {
+            font-size: 1.15rem;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .post p {
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+        .post .tags {
+            margin-top: 0.8rem;
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .post .tag {
+            font-size: 0.72rem;
+            padding: 0.2rem 0.65rem;
+            border-radius: 50px;
+            background: rgba(124,58,237,0.12);
+            color: var(--accent2);
+            font-weight: 600;
+        }
 
+        /* ── CV ── */
+        .cv-wrap {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 2rem 5rem;
+        }
+        .cv-wrap section {
+            padding: 4rem 0;
+        }
+        .cv-wrap section + section {
+            border-top: 1px solid var(--border);
+        }
         .sec-label {
             font-size: 0.78rem;
             text-transform: uppercase;
@@ -221,14 +218,14 @@
             font-weight: 700;
         }
         .sec-title {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 700;
             letter-spacing: -0.02em;
-            margin-bottom: 2.5rem;
+            margin-bottom: 2rem;
             color: #fff;
         }
 
-        /* ── About ── */
+        /* about grid */
         .about-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -243,109 +240,56 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
-        .about-card h3 {
-            font-size: 1rem;
-            color: #fff;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .about-card p, .about-card li {
-            color: var(--muted);
-            font-size: 0.92rem;
-            line-height: 1.7;
-        }
+        .about-card h3 { font-size: 1rem; color: #fff; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .about-card p, .about-card li { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
         .about-card ul { list-style: none; padding: 0; }
         .about-card li { padding: 0.35rem 0; }
-        .about-card li::before {
-            content: "▸";
-            color: var(--accent2);
-            margin-right: 0.6rem;
-            font-weight: 700;
-        }
+        .about-card li::before { content: "▸"; color: var(--accent2); margin-right: 0.6rem; font-weight: 700; }
 
-        /* ── Timeline ── */
+        /* timeline */
         .timeline { position: relative; padding-left: 2rem; }
         .timeline::before {
-            content: "";
-            position: absolute;
+            content: ""; position: absolute;
             left: 0; top: 0; bottom: 0;
             width: 2px;
             background: linear-gradient(to bottom, var(--accent), var(--blue), var(--green));
             border-radius: 1px;
         }
-        .tl-item {
-            position: relative;
-            margin-bottom: 2.2rem;
-            padding-left: 1.5rem;
-        }
+        .tl-item { position: relative; margin-bottom: 2.2rem; padding-left: 1.5rem; }
         .tl-item::before {
-            content: "";
-            position: absolute;
-            left: -2.35rem;
-            top: 0.45rem;
+            content: ""; position: absolute;
+            left: -2.35rem; top: 0.45rem;
             width: 10px; height: 10px;
             border-radius: 50%;
             background: var(--accent2);
             box-shadow: 0 0 12px var(--glow);
         }
-        .tl-item .period {
-            font-size: 0.78rem;
-            color: var(--accent2);
-            font-weight: 600;
-            letter-spacing: 0.03em;
-            margin-bottom: 0.2rem;
-        }
-        .tl-item h4 {
-            font-size: 1.1rem;
-            color: #fff;
-            font-weight: 600;
-        }
-        .tl-item .company {
-            font-size: 0.9rem;
-            color: var(--muted);
-            margin-bottom: 0.4rem;
-        }
-        .tl-item p {
-            font-size: 0.85rem;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-        .tl-bullets {
-            list-style: none;
-            padding: 0;
-            margin-top: 0.5rem;
-        }
+        .tl-item .period { font-size: 0.78rem; color: var(--accent2); font-weight: 600; letter-spacing: 0.03em; margin-bottom: 0.2rem; }
+        .tl-item h4 { font-size: 1.1rem; color: #fff; font-weight: 600; }
+        .tl-item .company { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.4rem; }
+        .tl-bullets { list-style: none; padding: 0; margin-top: 0.5rem; }
         .tl-bullets li {
-            font-size: 0.83rem;
-            color: var(--muted);
-            line-height: 1.65;
-            padding: 0.25rem 0;
-            padding-left: 1.2rem;
+            font-size: 0.83rem; color: var(--muted);
+            line-height: 1.65; padding: 0.25rem 0 0.25rem 1.2rem;
             position: relative;
         }
         .tl-bullets li::before {
-            content: "›";
-            position: absolute;
-            left: 0;
-            color: var(--accent2);
-            font-weight: 700;
-            font-size: 1.1rem;
-            line-height: 1.5;
+            content: "›"; position: absolute; left: 0;
+            color: var(--accent2); font-weight: 700;
+            font-size: 1.1rem; line-height: 1.5;
         }
 
-        /* ── Skills ── */
+        /* skills */
         .skills-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
             gap: 0.85rem;
         }
         .skill-tag {
             background: var(--surface2);
             border: 1px solid var(--border);
             border-radius: 14px;
-            padding: 1rem 1rem;
+            padding: 1rem;
             text-align: center;
             font-weight: 600;
             font-size: 0.85rem;
@@ -357,66 +301,61 @@
         .skill-tag:hover {
             border-color: var(--accent);
             background: rgba(124,58,237,0.08);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(124,58,237,0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124,58,237,0.1);
         }
-        .skill-tag .ico { font-size: 1.5rem; display: block; margin-bottom: 0.35rem; }
+        .skill-tag .ico { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
 
-        /* ── Education ── */
+        /* education */
         .edu-cards { display: grid; gap: 1rem; }
         .edu-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 1.5rem 1.8rem;
+            padding: 1.4rem 1.8rem;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap; gap: 0.8rem;
             transition: border-color 0.3s;
         }
         .edu-card:hover { border-color: rgba(124,58,237,0.3); }
         .edu-card .info h4 { font-size: 1.05rem; color: #fff; font-weight: 600; }
         .edu-card .info .inst { color: var(--muted); font-size: 0.85rem; }
-        .edu-card .info .date { color: var(--accent2); font-size: 0.78rem; font-weight: 600; margin-top: 0.25rem; }
-        .edu-card .grade {
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            color: #fff;
-            padding: 0.35rem 1rem;
+        .edu-card .info .date { color: var(--accent2); font-size: 0.78rem; font-weight: 600; margin-top: 0.2rem; }
+        .tag-badge {
+            padding: 0.3rem 0.9rem;
             border-radius: 50px;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: 700;
             white-space: nowrap;
         }
-        .edu-card .grade.inprogress {
-            background: transparent;
+        .tag-badge.inprogress {
             border: 1.5px solid var(--accent2);
             color: var(--accent2);
+            background: transparent;
         }
 
-        /* ── Awards ── */
+        /* awards */
         .award-list { display: grid; gap: 0.8rem; }
         .award-item {
             background: var(--surface2);
             border: 1px solid var(--border);
             border-radius: 14px;
-            padding: 1.2rem 1.5rem;
-            display: flex;
-            gap: 1rem;
-            align-items: center;
+            padding: 1.1rem 1.4rem;
+            display: flex; gap: 1rem; align-items: center;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             transition: border-color 0.3s;
         }
         .award-item:hover { border-color: rgba(245,158,11,0.3); }
-        .award-item .trophy { font-size: 1.8rem; flex-shrink: 0; }
+        .award-item .trophy { font-size: 1.6rem; flex-shrink: 0; }
         .award-item h5 { font-size: 1rem; color: #fff; font-weight: 600; }
         .award-item .from { font-size: 0.8rem; color: var(--muted); }
 
-        /* ── Publications ── */
+        /* publication */
         .pub-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -431,24 +370,17 @@
         .pub-card .meta { font-size: 0.8rem; color: var(--accent2); margin-bottom: 0.6rem; font-weight: 600; }
         .pub-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
 
-        /* ── Contact ── */
-        .contact-row {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
+        /* contact */
+        .contact-row { display: flex; gap: 1rem; flex-wrap: wrap; }
         .contact-link {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            padding: 1rem 1.8rem;
+            display: flex; align-items: center; gap: 0.65rem;
+            padding: 1rem 1.6rem;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 16px;
             color: var(--text);
             text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
+            font-weight: 500; font-size: 0.9rem;
             transition: all 0.3s ease;
         }
         .contact-link:hover {
@@ -459,10 +391,9 @@
 
         /* ── Footer ── */
         footer {
-            position: relative;
-            z-index: 1;
+            position: relative; z-index: 1;
             text-align: center;
-            padding: 3rem 2rem;
+            padding: 2rem 2rem;
             color: var(--muted);
             font-size: 0.82rem;
             border-top: 1px solid var(--border);
@@ -480,21 +411,20 @@
             50% { opacity: 0.3; transform: scale(1.8); }
         }
 
-        /* ── Animations ── */
+        /* animations */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .reveal {
-            opacity: 0;
-            transform: translateY(40px);
+            opacity: 0; transform: translateY(40px);
             transition: all 0.7s cubic-bezier(0.16,1,0.3,1);
         }
         .reveal.visible { opacity: 1; transform: translateY(0); }
 
         @media (max-width: 600px) {
-            .hero h1 { font-size: 2.2rem; }
-            .sec-title { font-size: 1.5rem; }
+            .hero h1 { font-size: 1.8rem; }
+            .sec-title { font-size: 1.4rem; }
             .timeline { padding-left: 1.2rem; }
             .tl-item { padding-left: 1rem; }
             .tl-item::before { left: -1.65rem; }
@@ -507,280 +437,314 @@
 <body>
     <canvas id="stars"></canvas>
 
+    <!-- ═══════════ NAV ═══════════ -->
+    <nav class="nav">
+        <button class="nav-tab active" data-tab="blog">Blog</button>
+        <button class="nav-tab" data-tab="cv">CV</button>
+        <div class="nav-ext">
+            <a href="https://github.com/Tohzzicklao" target="_blank" rel="noopener" title="GitHub">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/in/jos%C3%A9-antonio-nicol%C3%A1s-navarro-892b541b5/" target="_blank" rel="noopener" title="LinkedIn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+        </div>
+    </nav>
+
     <!-- ═══════════ HERO ═══════════ -->
     <header class="hero">
-        <div class="avatar-wrap">
-            <div class="avatar-ring"></div>
-            <div class="avatar-ring-inner"></div>
-            <img class="avatar"
-                 src="https://avatars.githubusercontent.com/u/38398146?v=4"
-                 alt="José Antonio Nicolás Navarro"
-                 loading="eager">
-        </div>
-        <div class="badge-row">
-            <span class="badge accent">🤖 AI Engineer</span>
-            <span class="badge">📊 Data Scientist</span>
-            <span class="badge accent">🔐 Cybersecurity</span>
-            <span class="badge">🧠 Deep Learning</span>
-        </div>
-        <h1>José Antonio<br>Nicolás Navarro</h1>
-        <p class="title-line">AI R&D Engineer · MSc in Artificial Intelligence · Cybersecurity Researcher</p>
-        <p class="loc">📍 Madrid, España</p>
-        <div class="hero-btns">
-            <a href="https://github.com/Tohzzicklao" target="_blank" rel="noopener" class="btn btn-primary">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                GitHub
-            </a>
-            <a href="https://www.linkedin.com/in/jos%C3%A9-antonio-nicol%C3%A1s-navarro-892b541b5/" target="_blank" rel="noopener" class="btn btn-outline">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                LinkedIn
-            </a>
-        </div>
-        <div class="scroll-ind">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
-        </div>
+        <img class="avatar"
+             src="https://avatars.githubusercontent.com/u/38398146?v=4"
+             alt="José Antonio Nicolás Navarro"
+             loading="eager">
+        <h1>José Antonio Nicolás</h1>
+        <p class="sub">AI R&D Engineer · Data Scientist · Cybersecurity</p>
     </header>
 
-    <!-- ═══════════ SOBRE MÍ ═══════════ -->
-    <section id="about">
-        <span class="sec-label">Sobre mí</span>
-        <h2 class="sec-title">De los datos a las ideas,<br>de las ideas al impacto</h2>
+    <!-- ═══════════ TAB: BLOG ═══════════ -->
+    <div class="tab-content active" id="tab-blog">
+        <div class="blog">
+            <span class="sec-label">Blog</span>
 
-        <div class="about-grid reveal">
-            <div class="about-card">
-                <h3>👨‍💻 Quién soy</h3>
-                <p>
-                    Ingeniero informático con máster en inteligencia artificial por la UPM
-                    y actualmente cursando un máster en ciberseguridad y privacidad en la UOC.
-                    Me apasiona la intersección entre el deep learning, la seguridad y la innovación.
-                </p>
-                <p style="margin-top:0.8rem;">
-                    Actualmente soy <strong>AI R&D Engineer en Zepo</strong>, desarrollando soluciones de
-                    ciberseguridad centradas en la gestión del riesgo humano mediante IA.
-                </p>
-            </div>
-            <div class="about-card">
-                <h3>🎯 Lo que hago</h3>
-                <ul>
-                    <li>Modelos de IA para detectar amenazas de ingeniería social (phishing, vishing, deepfakes)</li>
-                    <li>Sistemas de detección de anomalías de red con deep learning</li>
-                    <li>Pentesting autónomo basado en agentes orquestados</li>
-                    <li>Despliegue de modelos en producción (Azure, Kubernetes, CI/CD)</li>
-                </ul>
-            </div>
+            <article class="post reveal">
+                <div class="date">ABR 2026</div>
+                <h3>Arrancando en Zepo: IA aplicada a ciberseguridad</h3>
+                <p>Nueva etapa como AI R&D Engineer. Construyendo modelos para detectar amenazas de ingeniería social: phishing, vishing, deepfakes. La intersección entre IA y ciberseguridad es el lugar donde quiero estar.</p>
+                <div class="tags"><span class="tag">IA</span><span class="tag">Ciberseguridad</span><span class="tag">Deep Learning</span></div>
+            </article>
+
+            <article class="post reveal">
+                <div class="date">FEB 2025</div>
+                <h3>LADS: sistema de detección de anomalías de red con deep learning</h3>
+                <p>En Bull desarrollamos un sistema patentado de monitorización en tiempo real para infraestructuras críticas, desplegado en entornos multiplataforma con Kubernetes. Combinando redes neuronales profundas con despliegue en producción.</p>
+                <div class="tags"><span class="tag">Deep Learning</span><span class="tag">Kubernetes</span><span class="tag">Ciberseguridad</span></div>
+            </article>
+
+            <article class="post reveal">
+                <div class="date">ENE 2025</div>
+                <h3>Pentesting autónomo con agentes orquestados</h3>
+                <p>Diseñé e implementé un sistema de pentesting autónomo basado en agentes con IA, con reconocimiento automatizado, explotación controlada con human-in-the-loop y priorización inteligente de vulnerabilidades.</p>
+                <div class="tags"><span class="tag">Agentes IA</span><span class="tag">Pentesting</span><span class="tag">Automátización</span></div>
+            </article>
+
+            <article class="post reveal">
+                <div class="date">MAY 2022</div>
+                <h3>Publicado en Springer: Data Augmentation para reconocimiento de emociones en voz</h3>
+                <p>Nuestra arquitectura CNN + LSTM con técnicas de data augmentation alcanza un 86.44% de precisión en reconocimiento de emociones a partir de voz, superando el estado del arte en bases de datos públicas.</p>
+                <div class="tags"><span class="tag">Paper</span><span class="tag">Speech AI</span><span class="tag">Deep Learning</span></div>
+            </article>
         </div>
+    </div>
 
+    <!-- ═══════════ TAB: CV ═══════════ -->
+    <div class="tab-content" id="tab-cv">
+        <div class="cv-wrap">
 
-    </section>
-
-    <!-- ═══════════ EXPERIENCIA ═══════════ -->
-    <section id="experience">
-        <span class="sec-label">Experiencia</span>
-        <h2 class="sec-title">Trayectoria profesional</h2>
-        <div class="timeline reveal">
-            <div class="tl-item">
-                <span class="period">Abr 2026 — Presente</span>
-                <h4>AI R&D Engineer</h4>
-                <div class="company">Zepo · Madrid</div>
-                <p>Desarrollo de soluciones de ciberseguridad con IA para la gestión del riesgo humano. Diseño e implementación de modelos orientados a detectar y responder a amenazas de ingeniería social.</p>
-            </div>
-            <div class="tl-item">
-                <span class="period">Feb 2025 — Abr 2026</span>
-                <h4>Cybersecurity Data Scientist</h4>
-                <div class="company">Bull · Madrid</div>
-                <ul class="tl-bullets">
-                    <li>Contribución al desarrollo de un sistema patentado <strong>LADS</strong> de detección de anomalías de red basado en deep learning para infraestructuras críticas, con monitorización en tiempo real y despliegue multiplataforma (x86/ARM, contenedores y Kubernetes).</li>
-                    <li>Diseño e implementación de un sistema de <strong>pentesting autónomo basado en agentes orquestados</strong>, incluyendo reconocimiento, explotación controlada con human-in-the-loop y priorización de vulnerabilidades.</li>
-                    <li>Participación en <strong>proyectos europeos y nacionales</strong> de innovación tecnológica y ciberseguridad.</li>
-                    <li>Implementación de <strong>pipelines CI/CD</strong> para el despliegue automatizado e integración de modelos de deep learning en entornos empresariales.</li>
-                </ul>
-            </div>
-            <div class="tl-item">
-                <span class="period">Jun 2022 — Ene 2025</span>
-                <h4>Data Scientist</h4>
-                <div class="company">Iberia Express · Madrid</div>
-                <ul class="tl-bullets">
-                    <li>Diseño e implementación de proyectos de <strong>Machine Learning y Deep Learning</strong> para personalizar la experiencia del cliente (chatbots, precios dinámicos, recomendación).</li>
-                    <li><strong>Despliegue en producción</strong> de modelos predictivos en AzureML vía API.</li>
-                    <li>Mantenimiento de modelos en producción: reentrenamiento, ajuste de hiperparámetros y adaptación a nuevos desarrollos.</li>
-                    <li><strong>Tests A/B</strong> para el análisis del rendimiento de modelos.</li>
-                    <li>Automatización de procesos empresariales y alertado.</li>
-                    <li>Visualización de datos y cuadros de mando.</li>
-                    <li>Uso avanzado de <strong>Python, R, SQL y Linux</strong>.</li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
-    <!-- ═══════════ SKILLS ═══════════ -->
-    <section id="skills">
-        <span class="sec-label">Tech Stack</span>
-        <h2 class="sec-title">Tecnologías &amp; herramientas</h2>
-        <div class="skills-grid reveal">
-            <div class="skill-tag"><span class="ico">🐍</span> Python</div>
-            <div class="skill-tag"><span class="ico">🧠</span> Machine Learning</div>
-            <div class="skill-tag"><span class="ico">🔮</span> Deep Learning</div>
-            <div class="skill-tag"><span class="ico">📊</span> R</div>
-            <div class="skill-tag"><span class="ico">💾</span> SQL</div>
-            <div class="skill-tag"><span class="ico">🐧</span> Linux</div>
-            <div class="skill-tag"><span class="ico">🔐</span> Ciberseguridad</div>
-            <div class="skill-tag"><span class="ico">☁️</span> Azure / Cloud</div>
-            <div class="skill-tag"><span class="ico">🐳</span> Docker &amp; K8s</div>
-            <div class="skill-tag"><span class="ico">⚙️</span> CI/CD</div>
-            <div class="skill-tag"><span class="ico">🤖</span> LLMs &amp; Agentes</div>
-            <div class="skill-tag"><span class="ico">🎙️</span> Speech AI</div>
-        </div>
-    </section>
-
-    <!-- ═══════════ EDUCACIÓN ═══════════ -->
-    <section id="education">
-        <span class="sec-label">Formación</span>
-        <h2 class="sec-title">Educación</h2>
-        <div class="edu-cards reveal">
-            <div class="edu-card">
-                <div class="info">
-                    <h4>Máster en Ciberseguridad y Privacidad</h4>
-                    <div class="inst">Universitat Oberta de Catalunya (UOC)</div>
-                    <div class="date">Sept 2024 — Actualidad</div>
+            <!-- Sobre mí -->
+            <section id="cv-about">
+                <span class="sec-label">Sobre mí</span>
+                <h2 class="sec-title">De los datos a las ideas,<br>de las ideas al impacto</h2>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3>👨‍💻 Quién soy</h3>
+                        <p>
+                            Ingeniero informático con máster en inteligencia artificial por la UPM
+                            y actualmente cursando un máster en ciberseguridad y privacidad en la UOC.
+                            Me apasiona la intersección entre el deep learning, la seguridad y la innovación.
+                        </p>
+                        <p style="margin-top:0.8rem;">
+                            Actualmente soy <strong>AI R&D Engineer en Zepo</strong>, desarrollando soluciones de
+                            ciberseguridad centradas en la gestión del riesgo humano mediante IA.
+                        </p>
+                    </div>
+                    <div class="about-card">
+                        <h3>🎯 Lo que hago</h3>
+                        <ul>
+                            <li>Modelos de IA para detectar amenazas de ingeniería social (phishing, vishing, deepfakes)</li>
+                            <li>Sistemas de detección de anomalías de red con deep learning</li>
+                            <li>Pentesting autónomo basado en agentes orquestados</li>
+                            <li>Despliegue de modelos en producción (Azure, Kubernetes, CI/CD)</li>
+                        </ul>
+                    </div>
                 </div>
-                <span class="grade inprogress">En curso</span>
-            </div>
-            <div class="edu-card">
-                <div class="info">
-                    <h4>Máster en Inteligencia Artificial</h4>
-                    <div class="inst">Universidad Politécnica de Madrid (UPM)</div>
-                    <div class="date">Sept 2021 — Jul 2022</div>
-                </div>
-            </div>
-            <div class="edu-card">
-                <div class="info">
-                    <h4>Grado en Ingeniería Informática</h4>
-                    <div class="inst">Universidad de Murcia</div>
-                    <div class="date">— 2021</div>
-                </div>
-            </div>
-        </div>
-    </section>
+            </section>
 
-    <!-- ═══════════ PREMIOS ═══════════ -->
-    <section id="awards">
-        <span class="sec-label">Reconocimientos</span>
-        <h2 class="sec-title">Premios &amp; distinciones</h2>
-        <div class="award-list reveal">
-            <div class="award-item">
-                <span class="trophy">🏆</span>
-                <div>
-                    <h5>Premio al Mejor TFM 2021-22</h5>
-                    <div class="from">Comisión Académica del Máster en IA · UPM — Dic 2022</div>
+            <!-- Experiencia -->
+            <section id="cv-experience">
+                <span class="sec-label">Experiencia</span>
+                <h2 class="sec-title">Trayectoria profesional</h2>
+                <div class="timeline">
+                    <div class="tl-item">
+                        <span class="period">Abr 2026 — Presente</span>
+                        <h4>AI R&D Engineer</h4>
+                        <div class="company">Zepo · Madrid</div>
+                        <p>Desarrollo de soluciones de ciberseguridad con IA para la gestión del riesgo humano. Diseño e implementación de modelos orientados a detectar y responder a amenazas de ingeniería social.</p>
+                    </div>
+                    <div class="tl-item">
+                        <span class="period">Feb 2025 — Abr 2026</span>
+                        <h4>Cybersecurity Data Scientist</h4>
+                        <div class="company">Bull · Madrid</div>
+                        <ul class="tl-bullets">
+                            <li>Contribución al desarrollo de un sistema patentado <strong>LADS</strong> de detección de anomalías de red basado en deep learning para infraestructuras críticas, con monitorización en tiempo real y despliegue multiplataforma (x86/ARM, contenedores y Kubernetes).</li>
+                            <li>Diseño e implementación de un sistema de <strong>pentesting autónomo basado en agentes orquestados</strong>, incluyendo reconocimiento, explotación controlada con human-in-the-loop y priorización de vulnerabilidades.</li>
+                            <li>Participación en <strong>proyectos europeos y nacionales</strong> de innovación tecnológica y ciberseguridad.</li>
+                            <li>Implementación de <strong>pipelines CI/CD</strong> para el despliegue automatizado e integración de modelos de deep learning en entornos empresariales.</li>
+                        </ul>
+                    </div>
+                    <div class="tl-item">
+                        <span class="period">Jun 2022 — Ene 2025</span>
+                        <h4>Data Scientist</h4>
+                        <div class="company">Iberia Express · Madrid</div>
+                        <ul class="tl-bullets">
+                            <li>Diseño e implementación de proyectos de <strong>Machine Learning y Deep Learning</strong> para personalizar la experiencia del cliente (chatbots, precios dinámicos, recomendación).</li>
+                            <li><strong>Despliegue en producción</strong> de modelos predictivos en AzureML vía API.</li>
+                            <li>Mantenimiento de modelos en producción: reentrenamiento, ajuste de hiperparámetros y adaptación a nuevos desarrollos.</li>
+                            <li><strong>Tests A/B</strong> para el análisis del rendimiento de modelos.</li>
+                            <li>Automatización de procesos empresariales y alertado.</li>
+                            <li>Visualización de datos y cuadros de mando.</li>
+                            <li>Uso avanzado de <strong>Python, R, SQL y Linux</strong>.</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            <div class="award-item">
-                <span class="trophy">🥇</span>
-                <div>
-                    <h5>Premio José Cuena — Top 5 mejores expedientes</h5>
-                    <div class="from">Comisión Académica del Máster en IA · UPM — Jul 2022</div>
+            </section>
+
+            <!-- Skills -->
+            <section id="cv-skills">
+                <span class="sec-label">Tech Stack</span>
+                <h2 class="sec-title">Tecnologías &amp; herramientas</h2>
+                <div class="skills-grid">
+                    <div class="skill-tag"><span class="ico">🐍</span> Python</div>
+                    <div class="skill-tag"><span class="ico">🧠</span> Machine Learning</div>
+                    <div class="skill-tag"><span class="ico">🔮</span> Deep Learning</div>
+                    <div class="skill-tag"><span class="ico">📊</span> R</div>
+                    <div class="skill-tag"><span class="ico">💾</span> SQL</div>
+                    <div class="skill-tag"><span class="ico">🐧</span> Linux</div>
+                    <div class="skill-tag"><span class="ico">🔐</span> Ciberseguridad</div>
+                    <div class="skill-tag"><span class="ico">☁️</span> Azure / Cloud</div>
+                    <div class="skill-tag"><span class="ico">🐳</span> Docker &amp; K8s</div>
+                    <div class="skill-tag"><span class="ico">⚙️</span> CI/CD</div>
+                    <div class="skill-tag"><span class="ico">🤖</span> LLMs &amp; Agentes</div>
+                    <div class="skill-tag"><span class="ico">🎙️</span> Speech AI</div>
                 </div>
-            </div>
-            <div class="award-item">
-                <span class="trophy">📄</span>
-                <div>
-                    <h5>Publicación en Springer</h5>
-                    <div class="from">Data Augmentation Techniques for Speech Emotion Recognition and Deep Learning — May 2022</div>
+            </section>
+
+            <!-- Educación -->
+            <section id="cv-education">
+                <span class="sec-label">Formación</span>
+                <h2 class="sec-title">Educación</h2>
+                <div class="edu-cards">
+                    <div class="edu-card">
+                        <div class="info">
+                            <h4>Máster en Ciberseguridad y Privacidad</h4>
+                            <div class="inst">Universitat Oberta de Catalunya (UOC)</div>
+                            <div class="date">Sept 2024 — Actualidad</div>
+                        </div>
+                        <span class="tag-badge inprogress">En curso</span>
+                    </div>
+                    <div class="edu-card">
+                        <div class="info">
+                            <h4>Máster en Inteligencia Artificial</h4>
+                            <div class="inst">Universidad Politécnica de Madrid (UPM)</div>
+                            <div class="date">Sept 2021 — Jul 2022</div>
+                        </div>
+                    </div>
+                    <div class="edu-card">
+                        <div class="info">
+                            <h4>Grado en Ingeniería Informática</h4>
+                            <div class="inst">Universidad de Murcia</div>
+                            <div class="date">— 2021</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </section>
+            </section>
 
-    <!-- ═══════════ PUBLICACIÓN ═══════════ -->
-    <section id="publication">
-        <span class="sec-label">Investigación</span>
-        <h2 class="sec-title">Publicación destacada</h2>
-        <div class="pub-card reveal">
-            <h4>Data Augmentation Techniques for Speech Emotion Recognition and Deep Learning</h4>
-            <div class="meta">Springer · Mayo 2022</div>
-            <p>
-                Arquitectura neuronal que combina capas convolucionales con LSTM para reconocimiento de emociones en voz
-                usando mel-spectrograms. Propone técnicas de data augmentation que reducen el overfitting y alcanzan
-                un <strong>86.44% de precisión</strong> en bases de datos públicas, superando el estado del arte.
-            </p>
-        </div>
-    </section>
+            <!-- Premios -->
+            <section id="cv-awards">
+                <span class="sec-label">Reconocimientos</span>
+                <h2 class="sec-title">Premios &amp; distinciones</h2>
+                <div class="award-list">
+                    <div class="award-item">
+                        <span class="trophy">🏆</span>
+                        <div>
+                            <h5>Premio al Mejor TFM 2021-22</h5>
+                            <div class="from">Comisión Académica del Máster en IA · UPM — Dic 2022</div>
+                        </div>
+                    </div>
+                    <div class="award-item">
+                        <span class="trophy">🥇</span>
+                        <div>
+                            <h5>Premio José Cuena — Top 5 expedientes</h5>
+                            <div class="from">Comisión Académica del Máster en IA · UPM — Jul 2022</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <!-- ═══════════ PROYECTOS ═══════════ -->
-    <section id="projects">
-        <span class="sec-label">Proyectos</span>
-        <h2 class="sec-title">Investigación aplicada</h2>
-        <div class="about-grid reveal">
-            <div class="about-card">
-                <h3>🎙️ Reconocimiento de Emociones en Voz</h3>
-                <p>TFM — UPM. Deep learning aplicado a señales de audio para reconocer estados emocionales con arquitecturas CNN + LSTM y data augmentation.</p>
-            </div>
-            <div class="about-card">
-                <h3>🌳 Explicando Tree SHAP</h3>
-                <p>TFG — Universidad de Murcia. Herramienta de interpretabilidad para explicar modelos de machine learning con SHAP values.</p>
-            </div>
-        </div>
-    </section>
+            <!-- Publicación -->
+            <section id="cv-publication">
+                <span class="sec-label">Investigación</span>
+                <h2 class="sec-title">Publicación</h2>
+                <div class="pub-card">
+                    <h4>Data Augmentation Techniques for Speech Emotion Recognition and Deep Learning</h4>
+                    <div class="meta">Springer · Mayo 2022</div>
+                    <p>
+                        Arquitectura neuronal que combina capas convolucionales con LSTM para reconocimiento de emociones en voz
+                        usando mel-spectrograms. Propone técnicas de data augmentation que reducen el overfitting y alcanzan
+                        un <strong>86.44% de precisión</strong> en bases de datos públicas, superando el estado del arte.
+                    </p>
+                </div>
+            </section>
 
-    <!-- ═══════════ CONTACTO ═══════════ -->
-    <section id="contact">
-        <span class="sec-label">Contacto</span>
-        <h2 class="sec-title">Conectemos</h2>
-        <div class="contact-row reveal">
-            <a href="https://github.com/Tohzzicklao" target="_blank" rel="noopener" class="contact-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                GitHub · @Tohzzicklao
-            </a>
-            <a href="https://www.linkedin.com/in/jos%C3%A9-antonio-nicol%C3%A1s-navarro-892b541b5/" target="_blank" rel="noopener" class="contact-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                LinkedIn · José Antonio
-            </a>
+            <!-- Proyectos -->
+            <section id="cv-projects">
+                <span class="sec-label">Proyectos</span>
+                <h2 class="sec-title">Investigación aplicada</h2>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3>🎙️ Reconocimiento de Emociones en Voz</h3>
+                        <p>TFM — UPM. Deep learning aplicado a señales de audio para reconocer estados emocionales con arquitecturas CNN + LSTM y data augmentation.</p>
+                    </div>
+                    <div class="about-card">
+                        <h3>🌳 Explicando Tree SHAP</h3>
+                        <p>TFG — Universidad de Murcia. Herramienta de interpretabilidad para explicar modelos de machine learning con SHAP values.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contacto -->
+            <section id="cv-contact">
+                <span class="sec-label">Contacto</span>
+                <h2 class="sec-title">Conectemos</h2>
+                <div class="contact-row">
+                    <a href="https://github.com/Tohzzicklao" target="_blank" rel="noopener" class="contact-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        GitHub · @Tohzzicklao
+                    </a>
+                    <a href="https://www.linkedin.com/in/jos%C3%A9-antonio-nicol%C3%A1s-navarro-892b541b5/" target="_blank" rel="noopener" class="contact-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        LinkedIn · José Antonio
+                    </a>
+                </div>
+            </section>
+
         </div>
-    </section>
+    </div>
 
     <!-- ═══════════ FOOTER ═══════════ -->
     <footer>
         <span class="live-dot"></span> Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;">GitHub Pages</a>
-        &nbsp;·&nbsp; © 2025 José Antonio Nicolás Navarro
+        &nbsp;·&nbsp; © 2024 José Antonio Nicolás Navarro
     </footer>
 
     <script>
-        // ── Starfield ──
+        // ── Stars background ──
         (()=>{
             const c=document.getElementById('stars'),x=c.getContext('2d');
-            let s=[];
-            function R(){c.width=innerWidth;c.height=innerHeight}
+            let s=[],w,h;
+            function R(){w=c.width=innerWidth;h=c.height=innerHeight;}
             function S(){
-                s=[];const n=~~(c.width*c.height/2800);
-                for(let i=0;i<n;i++)s.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.2,o:Math.random(),p:Math.random()*Math.PI*2,ps:.005+Math.random()*.02});
+                s=[];const n=~~(w*h/2800);
+                for(let i=0;i<n;i++)s.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.4+.3,o:Math.random(),p:Math.random()*Math.PI*2,ps:Math.random()*.02+.005});
             }
             function D(){
-                x.clearRect(0,0,c.width,c.height);
+                x.clearRect(0,0,w,h);
                 for(const t of s){
                     t.p+=t.ps;
-                    const a=t.o*(.45+.55*Math.sin(t.p));
-                    x.beginPath();x.arc(t.x,t.y,t.r,0,Math.PI*2);
-                    x.fillStyle=`rgba(180,180,240,${a})`;x.fill();
-                    if(t.r>1){x.beginPath();x.arc(t.x,t.y,t.r*2.8,0,Math.PI*2);x.fillStyle=`rgba(124,58,237,${a*.1})`;x.fill();}
+                    const a=t.o*(.5+.5*Math.sin(t.p));
+                    x.beginPath();x.arc(t.x,t.y,t.r,0,Math.PI*2);x.fillStyle=`rgba(180,180,255,${a})`;x.fill();
+                    if(t.r>.9){x.beginPath();x.arc(t.x,t.y,t.r*2.2,0,Math.PI*2);x.fillStyle=`rgba(124,58,237,${a*.1})`;x.fill();}
                 }
                 requestAnimationFrame(D);
             }
-            R();S();D();addEventListener('resize',()=>{R();S();});
+            R();S();D();
+            addEventListener('resize',()=>{R();S();});
+        })();
+
+        // ── Tab switching ──
+        (()=>{
+            const tabs=document.querySelectorAll('.nav-tab');
+            const contents=document.querySelectorAll('.tab-content');
+            tabs.forEach(t=>{
+                t.addEventListener('click',()=>{
+                    const target=t.dataset.tab;
+                    tabs.forEach(b=>b.classList.remove('active'));
+                    t.classList.add('active');
+                    contents.forEach(c=>c.classList.remove('active'));
+                    document.getElementById('tab-'+target).classList.add('active');
+                    // re-trigger reveal animations
+                    setTimeout(()=>{
+                        document.querySelectorAll('.reveal').forEach(el=>el.classList.remove('visible'));
+                        document.querySelectorAll('.tab-content.active .reveal').forEach(el=>el.classList.add('visible'));
+                    },50);
+                });
+            });
         })();
 
         // ── Scroll reveal ──
         (()=>{
-            const o=new IntersectionObserver(e=>e.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.12,rootMargin:'0px 0px -30px 0px'});
+            const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.12,rootMargin:'0px 0px -30px 0px'});
             document.querySelectorAll('.reveal').forEach(e=>o.observe(e));
         })();
-
-        // ── Mouse parallax ──
-        document.addEventListener('mousemove',e=>{
-            const x=(e.clientX/innerWidth-.5)*6,y=(e.clientY/innerHeight-.5)*6;
-            const h=document.querySelector('.hero h1'),s=document.querySelector('.hero .title-line');
-            if(h)h.style.transform=`translate(${x*1.3}px,${y*1.3}px)`;
-            if(s)s.style.transform=`translate(${x*.7}px,${y*.7}px)`;
-        });
     </script>
 </body>
 </html>
