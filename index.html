@@ -241,6 +241,7 @@
             -webkit-backdrop-filter: blur(20px);
         }
         .about-card h3 { font-size: 1rem; color: #fff; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .about-card h3 .lucide { width: 1.15rem; height: 1.15rem; flex-shrink: 0; color: var(--accent2); }
         .about-card p, .about-card li { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
         .about-card ul { list-style: none; padding: 0; }
         .about-card li { padding: 0.35rem 0; }
@@ -304,7 +305,7 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(124,58,237,0.1);
         }
-        .skill-tag .ico { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+        .skill-tag .ico { display: block; width: 1.6rem; height: 1.6rem; margin: 0 auto 0.4rem; color: var(--accent2); }
 
         /* education */
         .edu-cards { display: grid; gap: 1rem; }
@@ -351,7 +352,7 @@
             transition: border-color 0.3s;
         }
         .award-item:hover { border-color: rgba(245,158,11,0.3); }
-        .award-item .trophy { font-size: 1.6rem; flex-shrink: 0; }
+        .award-item .trophy { font-size: 1.6rem; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
         .award-item h5 { font-size: 1rem; color: #fff; font-weight: 600; }
         .award-item .from { font-size: 0.8rem; color: var(--muted); }
 
@@ -479,7 +480,7 @@
                 <h2 class="sec-title">Sobre mí</h2>
                 <div class="about-grid">
                     <div class="about-card">
-                        <h3>👨‍💻 Quién soy</h3>
+                        <h3><i data-lucide="user-circle-2"></i> Quién soy</h3>
                         <p>
                             Ingeniero informático con máster en inteligencia artificial por la UPM
                             y máster en ciberseguridad y privacidad en la UOC.
@@ -491,7 +492,7 @@
                         </p>
                     </div>
                     <div class="about-card">
-                        <h3>🎯 Lo que hago</h3>
+                        <h3><i data-lucide="target"></i> Lo que hago</h3>
                         <ul>
                             <li>Modelos de IA para detectar amenazas de ingeniería social (phishing, vishing, deepfakes)</li>
                             <li>Sistemas de detección de anomalías de red con deep learning</li>
@@ -546,18 +547,18 @@
                 <span class="sec-label">Tech Stack</span>
                 <h2 class="sec-title">Tecnologías &amp; herramientas</h2>
                 <div class="skills-grid">
-                    <div class="skill-tag"><span class="ico">🐍</span> Python</div>
-                    <div class="skill-tag"><span class="ico">🧠</span> Machine Learning</div>
-                    <div class="skill-tag"><span class="ico">🔮</span> Deep Learning</div>
-                    <div class="skill-tag"><span class="ico">📊</span> R</div>
-                    <div class="skill-tag"><span class="ico">💾</span> SQL</div>
-                    <div class="skill-tag"><span class="ico">🐧</span> Linux</div>
-                    <div class="skill-tag"><span class="ico">🔐</span> Ciberseguridad</div>
-                    <div class="skill-tag"><span class="ico">☁️</span> Azure / Cloud</div>
-                    <div class="skill-tag"><span class="ico">🐳</span> Docker &amp; K8s</div>
-                    <div class="skill-tag"><span class="ico">⚙️</span> CI/CD</div>
-                    <div class="skill-tag"><span class="ico">🤖</span> LLMs &amp; Agentes</div>
-                    <div class="skill-tag"><span class="ico">🎙️</span> Speech AI</div>
+                    <div class="skill-tag"><i data-lucide="code-2" class="ico"></i> Python</div>
+                    <div class="skill-tag"><i data-lucide="brain" class="ico"></i> Machine Learning</div>
+                    <div class="skill-tag"><i data-lucide="orbit" class="ico"></i> Deep Learning</div>
+                    <div class="skill-tag"><i data-lucide="chart-bar" class="ico"></i> R</div>
+                    <div class="skill-tag"><i data-lucide="database" class="ico"></i> SQL</div>
+                    <div class="skill-tag"><i data-lucide="terminal" class="ico"></i> Linux</div>
+                    <div class="skill-tag"><i data-lucide="shield" class="ico"></i> Ciberseguridad</div>
+                    <div class="skill-tag"><i data-lucide="cloud" class="ico"></i> Azure / Cloud</div>
+                    <div class="skill-tag"><i data-lucide="container" class="ico"></i> Docker &amp; K8s</div>
+                    <div class="skill-tag"><i data-lucide="refresh-cw" class="ico"></i> CI/CD</div>
+                    <div class="skill-tag"><i data-lucide="bot" class="ico"></i> LLMs &amp; Agentes</div>
+                    <div class="skill-tag"><i data-lucide="audio-lines" class="ico"></i> Speech AI</div>
                 </div>
             </section>
 
@@ -596,14 +597,14 @@
                 <h2 class="sec-title">Premios &amp; distinciones</h2>
                 <div class="award-list">
                     <div class="award-item">
-                        <span class="trophy">🏆</span>
+                        <span class="trophy"><i data-lucide="trophy"></i></span>
                         <div>
                             <h5>Premio al Mejor TFM 2021-22</h5>
                             <div class="from">Comisión Académica del Máster en IA · UPM — Dic 2022</div>
                         </div>
                     </div>
                     <div class="award-item">
-                        <span class="trophy">🥇</span>
+                        <span class="trophy"><i data-lucide="medal"></i></span>
                         <div>
                             <h5>Premio José Cuena — Top 5 expedientes</h5>
                             <div class="from">Comisión Académica del Máster en IA · UPM — Jul 2022</div>
@@ -633,11 +634,11 @@
                 <h2 class="sec-title">Investigación aplicada</h2>
                 <div class="about-grid">
                     <div class="about-card">
-                        <h3>🎙️ Reconocimiento de Emociones en Voz</h3>
+                        <h3><i data-lucide="mic"></i> Reconocimiento de Emociones en Voz</h3>
                         <p>TFM — UPM. Deep learning aplicado a señales de audio para reconocer estados emocionales con arquitecturas CNN + LSTM y data augmentation.</p>
                     </div>
                     <div class="about-card">
-                        <h3>🌳 Explicando Tree SHAP</h3>
+                        <h3><i data-lucide="tree-deciduous"></i> Explicando Tree SHAP</h3>
                         <p>TFG — Universidad de Murcia. Herramienta de interpretabilidad para explicar modelos de machine learning con SHAP values.</p>
                     </div>
                 </div>
@@ -668,6 +669,7 @@
         &nbsp;·&nbsp; © 2026 José Antonio Nicolás Navarro
     </footer>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         // ── Stars background ──
         (()=>{
@@ -717,6 +719,7 @@
             const o=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.12,rootMargin:'0px 0px -30px 0px'});
             document.querySelectorAll('.reveal').forEach(e=>o.observe(e));
         })();
+        lucide.createIcons();
     </script>
 </body>
 </html>
