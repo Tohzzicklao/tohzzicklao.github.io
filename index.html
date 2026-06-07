@@ -287,30 +287,38 @@
 
         /* skills */
         .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
-            gap: 0.85rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
         .skill-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 0.95rem;
+            border-radius: 50px;
             background: var(--surface2);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1rem;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--text);
+            font-weight: 500;
+            font-size: 0.82rem;
+            color: var(--muted);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
+            white-space: nowrap;
         }
         .skill-tag:hover {
             border-color: var(--accent);
-            background: rgba(201,134,74,0.08);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(201,134,74,0.1);
+            background: rgba(201,134,74,0.1);
+            color: #fff;
+            transform: translateY(-1px);
         }
-        .skill-tag .ico { display: block; width: 1.6rem; height: 1.6rem; margin: 0 auto 0.4rem; color: var(--accent2); }
+        .skills-subtitle {
+            font-size: 1.05rem;
+            color: #fff;
+            font-weight: 600;
+            margin: 2.2rem 0 1rem;
+            letter-spacing: -0.01em;
+        }
 
         /* education */
         .edu-cards { display: grid; gap: 1rem; }
@@ -370,6 +378,10 @@
         .award-item .from { font-size: 0.8rem; color: var(--muted); }
 
         /* publication */
+        .pub-list {
+            display: grid;
+            gap: 1rem;
+        }
         .pub-card {
             display: block;
             background: var(--surface);
@@ -563,21 +575,60 @@
 
             <!-- Skills -->
             <section id="cv-skills">
-                <span class="sec-label reveal">Tech Stack</span>
-                <h2 class="sec-title reveal" style="transition-delay: 0.05s">Technologies &amp; Tools</h2>
+                <span class="sec-label reveal">Skills</span>
+                <h2 class="sec-title reveal" style="transition-delay: 0.05s">Technologies &amp; Expertise</h2>
+
+                <h3 class="skills-subtitle reveal" style="transition-delay: 0.08s">Stack &amp; Tools</h3>
                 <div class="skills-grid">
-                    <div class="skill-tag reveal" style="transition-delay: 0.08s"><i data-lucide="code-2" class="ico"></i> Python</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.13s"><i data-lucide="brain" class="ico"></i> Machine Learning</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.18s"><i data-lucide="orbit" class="ico"></i> Deep Learning</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.23s"><i data-lucide="chart-bar" class="ico"></i> R</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.28s"><i data-lucide="database" class="ico"></i> SQL</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.33s"><i data-lucide="terminal" class="ico"></i> Linux</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.38s"><i data-lucide="shield" class="ico"></i> Cybersecurity</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.43s"><i data-lucide="cloud" class="ico"></i> Azure / Cloud</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.48s"><i data-lucide="container" class="ico"></i> Docker &amp; K8s</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.53s"><i data-lucide="refresh-cw" class="ico"></i> CI/CD</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.58s"><i data-lucide="bot" class="ico"></i> LLMs &amp; Agentes</div>
-                    <div class="skill-tag reveal" style="transition-delay: 0.63s"><i data-lucide="audio-lines" class="ico"></i> Speech AI</div>
+                            <div class="skill-tag reveal">Python</div>
+                            <div class="skill-tag reveal">R</div>
+                            <div class="skill-tag reveal">Bash</div>
+                            <div class="skill-tag reveal">SQL</div>
+                            <div class="skill-tag reveal">GitHub</div>
+                            <div class="skill-tag reveal">Docker</div>
+                            <div class="skill-tag reveal">Kubernetes</div>
+                            <div class="skill-tag reveal">Azure Cloud</div>
+                            <div class="skill-tag reveal">AzureML SDK</div>
+                            <div class="skill-tag reveal">LangChain</div>
+                            <div class="skill-tag reveal">Claude</div>
+                            <div class="skill-tag reveal">GPT</div>
+                            <div class="skill-tag reveal">pandas</div>
+                            <div class="skill-tag reveal">numpy</div>
+                            <div class="skill-tag reveal">tidyverse</div>
+                            <div class="skill-tag reveal">data.table</div>
+                            <div class="skill-tag reveal">ggplot</div>
+                            <div class="skill-tag reveal">scikit-learn</div>
+                            <div class="skill-tag reveal">Keras</div>
+                            <div class="skill-tag reveal">TensorFlow</div>
+                            <div class="skill-tag reveal">PyTorch</div>
+                            <div class="skill-tag reveal">caret</div>
+                            <div class="skill-tag reveal">mlr</div>
+                </div>
+
+                <h3 class="skills-subtitle reveal" style="transition-delay: 0.1s">AI / ML</h3>
+                <div class="skills-grid">
+                            <div class="skill-tag reveal">Supervised Learning</div>
+                            <div class="skill-tag reveal">Unsupervised Learning</div>
+                            <div class="skill-tag reveal">Anomaly Detection</div>
+                            <div class="skill-tag reveal">LLMs</div>
+                            <div class="skill-tag reveal">Autoencoders</div>
+                            <div class="skill-tag reveal">NLP</div>
+                            <div class="skill-tag reveal">BERT</div>
+                            <div class="skill-tag reveal">XGBoost</div>
+                            <div class="skill-tag reveal">CatBoost</div>
+                            <div class="skill-tag reveal">LightGBM</div>
+                            <div class="skill-tag reveal">Random Forest</div>
+                            <div class="skill-tag reveal">SVM</div>
+                            <div class="skill-tag reveal">GLM</div>
+                </div>
+
+                <h3 class="skills-subtitle reveal" style="transition-delay: 0.12s">Soft Skills</h3>
+                <div class="skills-grid">
+                            <div class="skill-tag reveal">Critical Thinking</div>
+                            <div class="skill-tag reveal">Teamwork</div>
+                            <div class="skill-tag reveal">Problem-Solving</div>
+                            <div class="skill-tag reveal">Attention to Detail</div>
+                            <div class="skill-tag reveal">Communication</div>
                 </div>
             </section>
 
@@ -643,6 +694,7 @@
             <section id="cv-publication">
                 <span class="sec-label reveal">Research</span>
                 <h2 class="sec-title reveal" style="transition-delay: 0.05s">Publications</h2>
+                <div class="pub-list">
                 <a href="https://link.springer.com/chapter/10.1007/978-3-031-06527-9_27" target="_blank" rel="noopener" class="pub-card reveal" style="transition-delay: 0.1s">
                     <h4>Data Augmentation Techniques for Speech Emotion Recognition and Deep Learning</h4>
                     <div class="meta">Springer · May 2022</div>
@@ -668,6 +720,7 @@
                         making complex model decisions accessible and transparent.
                     </p>
                 </a>
+                </div>
             </section>
 
             <!-- Contact -->
