@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="If AI lets every company cut its workforce, who is left to buy what they sell? An essay on wages, customers, horses, petrostates and who owns the machines.">
+    <meta property="og:title" content="Who Buys the Fords? AI and the Economy Without Customers">
+    <meta property="og:description" content="If every company automates, who is left to buy what they sell?">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://tohzzicklao.github.io/blog/who-buys-the-fords.html">
+    <meta name="theme-color" content="#05080d">
+    <link rel="canonical" href="https://tohzzicklao.github.io/blog/who-buys-the-fords.html">
+    <title>Who Buys the Fords? | José Antonio Nicolás</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2305080d'/%3E%3Cpath d='M50 14 82 26v24c0 19-13 31-32 37C31 81 18 69 18 50V26z' fill='none' stroke='%2300f0b5' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%237c5cff'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05080d;
+            --panel: rgba(12, 18, 28, 0.72);
+            --line: rgba(0, 240, 181, 0.12);
+            --line-strong: rgba(0, 240, 181, 0.35);
+            --text: #e6edf5;
+            --muted: #8794a6;
+            --dim: #566275;
+            --cyber: #00f0b5;
+            --neural: #7c5cff;
+            --alert: #ff4d6d;
+            --glow-c: rgba(0, 240, 181, 0.25);
+            --glow-n: rgba(124, 92, 255, 0.25);
+            --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+            --display: 'Space Grotesk', 'Inter', sans-serif;
+            --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::selection { background: var(--cyber); color: var(--bg); }
+        a { color: inherit; }
+        strong { color: #fff; font-weight: 600; }
+
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(600px 400px at 15% 10%, var(--glow-n), transparent 70%),
+                radial-gradient(700px 500px at 90% 40%, rgba(0, 240, 181, 0.10), transparent 70%);
+        }
+        main, footer, .nav { position: relative; z-index: 1; }
+
+        /* ══════════ NAV ══════════ */
+        .nav {
+            position: sticky; top: 0;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+            background: rgba(5, 8, 13, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--line);
+        }
+        .brand {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .brand .p { color: var(--cyber); }
+        .brand .h { color: var(--neural); }
+        .back {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 0.4rem 0.7rem;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .back:hover { color: var(--cyber); background: rgba(255,255,255,0.04); }
+
+        /* ══════════ ARTICLE ══════════ */
+        .wrap { max-width: 780px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+        .post-head { padding: 4rem 0 2.5rem; }
+        .sec-label {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--cyber);
+            letter-spacing: 0.08em;
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.9rem;
+        }
+        .sec-label::after {
+            content: ''; width: 48px; height: 1px;
+            background: linear-gradient(90deg, var(--cyber), transparent);
+        }
+        h1 {
+            font-family: var(--display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        h1 .grad {
+            background: linear-gradient(100deg, var(--cyber) 0%, #5fd4ff 45%, var(--neural) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+        }
+        .meta { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); }
+        .lead { color: var(--muted); font-size: 1.08rem; margin-top: 1.5rem; }
+        .lead + .lead { margin-top: 1rem; }
+
+        .panel {
+            position: relative;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .callout {
+            padding: 1.3rem 1.5rem;
+            margin: 0 0 1.3rem;
+            border-color: rgba(255, 77, 109, 0.35);
+            background: rgba(255, 77, 109, 0.05);
+            color: var(--muted);
+        }
+        .callout strong { color: var(--alert); }
+
+        .quote {
+            margin: 1.4rem 0;
+            padding: 1.1rem 1.4rem;
+            border-left: 2px solid var(--neural);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+        .quote span { display: block; margin-top: 0.5rem; font-size: 0.72rem; color: var(--dim); }
+
+        .outro { color: var(--muted); margin: 2rem 0 0; }
+
+        .prose { margin: 2.5rem 0; }
+        .prose h2 {
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.4rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .prose h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .prose p { color: var(--muted); margin-bottom: 1rem; }
+        .prose em { color: var(--text); font-style: normal; }
+        .table-wrap { overflow-x: auto; margin: 0 0 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { text-align: left; vertical-align: top; padding: 0.75rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { font-family: var(--mono); font-size: 0.7rem; font-weight: 500; color: var(--cyber); text-transform: uppercase; letter-spacing: 0.06em; border-bottom-color: var(--line); }
+        td { color: var(--muted); min-width: 9rem; }
+        td:first-child { color: var(--text); white-space: nowrap; min-width: 0; }
+        tr:last-child td { border-bottom: none; }
+
+        .lead, .prose p, .outro { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+        .cite { font-family: var(--mono); font-size: 0.65em; line-height: 0; margin-left: 0.1em; }
+        .cite a { color: var(--cyber); text-decoration: none; }
+        .cite a:hover { text-decoration: underline; }
+        .sources li { scroll-margin-top: 90px; }
+        .sources li:target { color: var(--text); }
+        .sources { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+        .sources h2 { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; color: var(--cyber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.9rem; }
+        .sources ol { padding-left: 1.3rem; display: grid; gap: 0.5rem; }
+        .sources li { color: var(--dim); font-size: 0.82rem; }
+        .sources li::marker { font-family: var(--mono); color: var(--dim); }
+        .sources a { color: var(--muted); text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+        .sources a:hover { color: var(--cyber); }
+
+        /* diagrams */
+        .fig { margin: 1.6rem 0; }
+        .fig-scroll { overflow-x: auto; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        .fig svg { display: block; width: 100%; min-width: 520px; height: auto; }
+        .fig figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); margin-top: 0.6rem; text-align: center; }
+        .d-box { fill: rgba(255,255,255,0.025); stroke: var(--line-strong); stroke-width: 1.2; }
+        .d-box.hw { fill: rgba(124,92,255,0.07); stroke: rgba(124,92,255,0.5); }
+        .d-box.hot { fill: rgba(255,77,109,0.08); stroke: rgba(255,77,109,0.6); }
+        .d-zone { fill: none; stroke: var(--dim); stroke-width: 1.2; stroke-dasharray: 5 5; }
+        .d-h { font-family: var(--mono); font-size: 13px; fill: var(--cyber); letter-spacing: 0.05em; }
+        .d-t { font-family: var(--display); font-size: 15px; font-weight: 600; fill: var(--text); }
+        .d-s { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+        .d-m { font-family: var(--mono); font-size: 12px; fill: var(--text); }
+        .d-m.ok { fill: var(--cyber); }
+        .d-m.alert { fill: var(--alert); }
+        .d-arrow { stroke: var(--cyber); stroke-width: 1.5; }
+        .d-arrow.hot { stroke: var(--alert); stroke-dasharray: 5 4; }
+        .d-head { fill: var(--cyber); }
+        .d-head.hot { fill: var(--alert); }
+
+        /* ══════════ FOOTER ══════════ */
+        footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--line);
+            padding: 1.8rem 0;
+        }
+        footer .wrap {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+            font-family: var(--mono); font-size: 0.75rem; color: var(--dim);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyber); }
+
+        a:focus-visible {
+            outline: 2px solid var(--cyber);
+            outline-offset: 3px;
+            border-radius: 8px;
+        }
+
+        @media print {
+            .bg-glow, .nav { display: none !important; }
+            body { background: #fff; color: #111; }
+            strong, h1 .grad { color: #111; -webkit-text-fill-color: #111; }
+            .panel { background: none; border-color: #ccc; backdrop-filter: none; break-inside: avoid; }
+            .fig-scroll { background: #05080d; }
+            p, li, .meta { color: #333 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <nav class="nav">
+        <a href="../index.html" class="brand"><span class="p">jose@</span><span class="h">ai-sec</span>:~$</a>
+        <a href="index.html" class="back">cd ../blog</a>
+    </nav>
+
+    <main>
+        <article class="wrap">
+            <header class="post-head">
+                <div class="sec-label">BLOG // ESSAY</div>
+                <h1>Who buys the Fords? <span class="grad">AI and the economy without customers</span></h1>
+                <div class="meta">June 20, 2026 · José Antonio Nicolás Navarro</div>
+                <p class="lead">
+                    Every company's dream is to get rid of its biggest cost, which is usually people. Every company's quiet
+                    assumption is that its customers are also people. For two centuries, those two facts lived together
+                    without much trouble, because no company could get anywhere near the dream.
+                </p>
+                <p class="lead">
+                    AI might change that. Not for one company, but for all of them at roughly the same time. And as far as I can
+                    tell, <strong>nobody is in charge of checking what happens next</strong>.
+                </p>
+            </header>
+
+            <div class="panel callout">
+                <strong>Disclaimer:</strong> I'm an engineer who works with AI every day, not an economist. This is an essay, not a
+                forecast: speculation with footnotes. The facts are sourced at the bottom; the opinions are mine, and I reserve the
+                right to be wrong about them in public.
+            </div>
+
+            <section class="prose">
+                <h2><span>01</span>Robots don't buy cars</h2>
+                <p>
+                    There's an old story about Walter Reuther, the legendary head of the United Auto Workers. In the early 1950s, he
+                    toured a newly automated Ford plant in Cleveland. A company official proudly pointed at the machines and asked
+                    him how he was going to collect union dues from them. Reuther's answer:<sup class="cite"><a href="#src-1">1</a></sup>
+                </p>
+                <div class="panel quote">
+                    "How are you going to get them to buy Fords?"
+                    <span>Walter Reuther, as reported by the UAW-CIO, January 1955<sup class="cite"><a href="#src-1">1</a></sup></span>
+                </div>
+                <p>
+                    The exact wording is shaky, and later retellings swapped the anonymous official for Henry Ford II, which makes for
+                    a better story and worse history.<sup class="cite"><a href="#src-1">1</a></sup> But the question has aged
+                    remarkably well. Seventy years later, the machines are no longer bolting engine blocks. They're writing code,
+                    answering support tickets and drafting contracts. And they still don't buy Fords.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>02</span>The Henry Ford myth</h2>
+                <p>
+                    Whenever this topic comes up, someone brings up Henry Ford. In January 1914 he famously more than doubled his
+                    workers' pay to five dollars a day, and the popular story says he did it so his workers could afford the cars
+                    they were building. A capitalist who understood that wages are demand. Lovely.
+                </p>
+                <p>
+                    It's mostly a myth. Ford's real problem was that nobody wanted to stay on his assembly line: in 1913 he had to
+                    hire over 40,000 people to keep about 13,000 on the job. The five dollars was largely a bonus, conditional on good
+                    behaviour, checked by a company department that literally visited workers' homes. And the arithmetic never
+                    worked anyway: around 14,000 employees against roughly 300,000 cars sold in 1914.<sup class="cite"><a href="#src-2">2</a></sup>
+                    Ford was buying loyalty, not customers.
+                </p>
+                <p>
+                    I think this myth is the key to the whole problem. <strong>No company pays wages to create its own customers.</strong>
+                    It pays wages because it needs the work done. The fact that those wages then come back as spending is a side
+                    effect, spread across the whole economy, that no single company owns or controls. The loop that keeps capitalism
+                    running is maintained entirely by accident.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>03</span>The loop, and why every company will cut it anyway</h2>
+                <p>
+                    Here's the loop in its simplest form. Companies pay wages to people. People spend those wages buying from
+                    companies. Everyone is a worker on Monday and a customer on Saturday.
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 620 262" role="img" aria-label="Two diagrams. Left: firms pay wages to households, households spend money at firms, closing the loop. Right: firms with AI no longer pay wages, so the spending arrow back to firms becomes uncertain."><defs><marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><text class="d-h" x="150" y="20" text-anchor="middle">1 · THE LOOP WE HAVE</text><rect class="d-box" x="60" y="40" width="180" height="42" rx="8"/><text class="d-t" x="150" y="66" text-anchor="middle">Companies</text><rect class="d-box" x="60" y="174" width="180" height="42" rx="8"/><text class="d-t" x="150" y="200" text-anchor="middle">People</text><line class="d-arrow" x1="105" y1="82" x2="105" y2="170" marker-end="url(#arr1)"/><text class="d-m" x="97" y="132" text-anchor="end">wages</text><line class="d-arrow" x1="195" y1="174" x2="195" y2="86" marker-end="url(#arr1)"/><text class="d-m ok" x="203" y="132">spending</text><text class="d-s" x="150" y="246" text-anchor="middle">everyone is both worker and customer</text><line class="d-zone" x1="310" y1="14" x2="310" y2="250"/><text class="d-h" x="465" y="20" text-anchor="middle">2 · EVERYONE AUTOMATES</text><rect class="d-box hw" x="375" y="40" width="180" height="42" rx="8"/><text class="d-t" x="465" y="66" text-anchor="middle">Companies + AI</text><rect class="d-box hot" x="375" y="174" width="180" height="42" rx="8"/><text class="d-t" x="465" y="200" text-anchor="middle">People</text><line class="d-arrow hot" x1="420" y1="82" x2="420" y2="170" marker-end="url(#arr1h)"/><text class="d-m alert" x="412" y="132" text-anchor="end">wages ✕</text><line class="d-arrow hot" x1="510" y1="174" x2="510" y2="86" marker-end="url(#arr1h)"/><text class="d-m alert" x="518" y="132">spending?</text><text class="d-s" x="465" y="246" text-anchor="middle">cut the wages, and the customers go too</text></svg></div>
+                    <figcaption>Fig. 1 · The circular flow, before and after. Nobody in the second picture did anything irrational.</figcaption>
+                </figure>
+                <p>
+                    Now put yourself in the shoes of a CEO. If AI lets you do the same work with half the staff, you'd be crazy not
+                    to. Your costs drop, your margins grow, your shareholders cheer. Your former employees were never a meaningful
+                    share of <em>your</em> customers anyway. Ford taught us that.
+                </p>
+                <p>
+                    The problem is that every other CEO is doing the same calculation, and they all reach the same answer. Economists
+                    call this a <strong>fallacy of composition</strong>: what's rational for each one is disastrous for all of them.
+                    It's a prisoner's dilemma where the prisoners are Fortune 500 companies. The first company to automate wins a
+                    margin. The last one wins a market with nobody in it.
+                </p>
+                <p>
+                    And no individual company can fix this by being nice. A firm that keeps paying humans it doesn't need is just
+                    a less profitable firm, and the market has a well-documented procedure for those.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>04</span>"We've heard this before"</h2>
+                <p>
+                    The standard reply is that people have been predicting this for two hundred years, and they've always been wrong.
+                    Which is true. In 1930, John Maynard Keynes warned of a "new disease" called <strong>technological
+                    unemployment</strong>: "our discovery of means of economising the use of labour outrunning the pace at which we can
+                    find new uses for labour". He also predicted that by 2030 we'd be so rich that a fifteen-hour work week would
+                    be enough.<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+                <p>
+                    He got the first half right: we did get vastly richer. We just didn't take it as free time. We kept the forty-hour
+                    week and invented things to fill it, like the quick sync that could have been an email.
+                </p>
+                <p>
+                    The optimists have a modern version, too. When DeepSeek showed in January 2025 that strong models could be
+                    trained far more cheaply, Microsoft's Satya Nadella answered with an economics concept from the 1860s: the
+                    <strong>Jevons paradox</strong>. Make something cheaper and people use more of it, not less. "As AI gets more
+                    efficient and accessible, we will see its use skyrocket".<sup class="cite"><a href="#src-4">4</a></sup>
+                    Applied to work, the argument goes: when intelligence becomes cheap, we'll find so many new uses for it that
+                    humans will be busier than ever, doing jobs we can't imagine yet.
+                </p>
+                <p>
+                    Maybe. That's what happened with tractors, looms and spreadsheets. But it's worth asking who it happened
+                    <em>for</em>.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>05</span>Ask the horses</h2>
+                <p>
+                    In 1983, Nobel-winning economist Wassily Leontief made an uncomfortable comparison. Horses were once essential
+                    to the economy. Between 1840 and 1900, the number of horses and mules in the US grew sixfold, to more than 21
+                    million. Then came the tractor and the car, and by 1960 there were about 3 million left.<sup class="cite"><a href="#src-5">5</a></sup>
+                    Leontief's warning was that the role of humans as the most important factor of production could shrink the same
+                    way.<sup class="cite"><a href="#src-5">5</a></sup>
+                </p>
+                <p>
+                    Nobody told the horses that technology always creates new jobs. Technically it did: the economy after the tractor
+                    had far more jobs than before. Just none for horses, because horses only ever had one thing to offer, and
+                    something else did it better.
+                </p>
+                <p>
+                    Every previous wave of automation replaced a <em>specific</em> human ability: muscle, then routine, then
+                    calculation. Workers moved to whatever machines couldn't do yet, which was usually something involving thinking.
+                    The uncomfortable question about AI is whether it's another tractor, or the first technology aimed at the
+                    thing we kept retreating to.
+                </p>
+                <p>
+                    The people building it aren't exactly reassuring. In May 2025, Anthropic's CEO Dario Amodei told Axios that AI
+                    could wipe out half of all entry-level white-collar jobs and push unemployment to 10–20% within one to five
+                    years.<sup class="cite"><a href="#src-6">6</a></sup> When the person selling you the tractor warns you about the
+                    horses, it's worth paying attention.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>06</span>The loop doesn't break. It shrinks.</h2>
+                <p>
+                    This is the part I find most interesting, and where I think the usual "nobody will be able to buy anything"
+                    argument goes wrong. It assumes the economy needs <em>everyone</em> to be a customer. It doesn't. It only needs
+                    enough money to be spent by someone.
+                </p>
+                <p>
+                    That's already happening without any help from AI. According to a Moody's Analytics estimate reported in
+                    February 2025, the top 10% of US earners, households making roughly $250,000 or more, accounted for
+                    <strong>49.7% of all consumer spending</strong>, a record. Three decades ago, it was about 36%.<sup class="cite"><a href="#src-7">7</a></sup>
+                    Half the consumer economy already runs on one household in ten.
+                </p>
+                <p>
+                    Push that trend further and you don't get a collapse, you get something stranger. Companies sell to the people
+                    who own the companies. Companies sell to other companies: AI labs buy chips, chip makers buy power plants, data
+                    centres buy land. GDP can grow perfectly well while most people become economically irrelevant. Ford needed
+                    millions of customers. A sufficiently automated economy might be happy with a few hundred thousand, as long as
+                    they're rich enough. Luxury brands have run on this business model for a century.
+                </p>
+                <p>
+                    So the real risk isn't that the machine stops. It's that it keeps running fine, just without needing us in the
+                    loop. Which, as someone who works in security, is a sentence I usually say about attackers.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>07</span>The intelligence curse</h2>
+                <p>
+                    There's a name for what happens to societies whose wealth doesn't depend on their people. Economists call it the
+                    <strong>resource curse</strong>. Countries that live off oil often end up with weaker institutions and less
+                    investment in their citizens than countries that live off their citizens' work. If the state's income comes out of
+                    the ground, it doesn't need educated, healthy, productive people. It needs a pipeline and some guards.
+                </p>
+                <p>
+                    In April 2025, Luke Drago and Rudolf Laine published an essay series applying exactly that logic to AI, which they
+                    called <strong>the intelligence curse</strong>. If AI and capital can do the economically important work, governments
+                    and companies lose their incentive to invest in ordinary people, the same way petrostates do.<sup class="cite"><a href="#src-8">8</a></sup>
+                </p>
+                <p>
+                    I think this is the strongest version of the argument, because it goes beyond money. Our leverage as ordinary
+                    people has always come from being needed. A strike only works if your work matters. A government listens partly
+                    because it needs your taxes, and those taxes come from your wages. Take away the wages, and you haven't just lost
+                    an income. You've lost your seat at the table. You still have your vote, of course. It's just worth noting how
+                    many petrostates also hold elections.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>08</span>The patches on the table</h2>
+                <p>
+                    None of this is inevitable, and people have proposed fixes. Each one is interesting, and each one has a catch:
+                </p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Idea</th><th>What it does</th><th>The catch</th></tr></thead>
+                        <tbody>
+                            <tr><td>Basic income</td><td>Give everyone money directly, so they stay customers whether or not they work.</td><td>Someone has to pay for it, and the evidence so far is from small pilots, not from economies without work.</td></tr>
+                            <tr><td>Robot tax</td><td>Bill Gates in 2017: if a robot does a worker's job, tax it like the worker was taxed.<sup class="cite"><a href="#src-11">11</a></sup></td><td>Defining a "robot" is hard when it's a subscription to a model.</td></tr>
+                            <tr><td>Equity for all</td><td>Sam Altman in 2021: large companies pay 2.5% of their market value each year, in shares, into a fund owned by every citizen.<sup class="cite"><a href="#src-12">12</a></sup></td><td>Requires the owners to agree to own a bit less. Historically, a tough sell.</td></tr>
+                            <tr><td>Shorter weeks</td><td>Keynes' idea: spread the remaining work across everyone.<sup class="cite"><a href="#src-3">3</a></sup></td><td>We've had the productivity for this for decades, and chose more meetings.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>
+                    The basic income pilots are worth a closer look, because they keep getting cited by both sides. Finland gave 2,000
+                    unemployed people €560 a month for two years, in 2017 and 2018; it didn't make much difference to employment, and
+                    recipients reported better wellbeing.<sup class="cite"><a href="#src-9">9</a></sup> In the US, a study funded by Sam
+                    Altman gave 1,000 people $1,000 a month for three years. They worked about 1.3 hours less per week and spent the
+                    money mostly on basics like food, housing and transport.<sup class="cite"><a href="#src-10">10</a></sup>
+                </p>
+                <p>
+                    So, roughly: people given money don't stop working, don't buy yachts, and pay their rent. That's useful to know.
+                    But these experiments answer the question "what happens if some people get a cheque in an economy that still
+                    runs on work?". The question AI is asking is the opposite one.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>09</span>The question behind the question</h2>
+                <p>
+                    If I had to boil this down to one idea, it's this: <strong>the question isn't whether there will be jobs. It's
+                    who owns the machines.</strong>
+                </p>
+                <p>
+                    For two hundred years, most people got their share of the economy through wages. Wages were how the pie got
+                    sliced. If AI makes labour much less valuable, the pie can still be huge; it just stops being sliced through
+                    work. What's left is ownership: of companies, of data, of compute, of energy, of land. If you own a piece of
+                    that, automation is a dividend. If you don't, it's a layoff letter.
+                </p>
+                <p>
+                    That's why the more serious proposals, whatever you think of them, end up being about ownership rather than
+                    jobs. A pension fund that holds AI companies turns workers into the robots' landlords. A sovereign fund turns a
+                    country into a shareholder. Neither is utopian. Norway has been doing a version of it with oil for decades.
+                    Which, given the previous section, is the most encouraging thing about petrostates I'll ever write.
+                </p>
+            </section>
+
+            <p class="outro">
+                Reuther's question was never really about cars. It was about who the economy is for. For most of history, the
+                answer was forced on everyone by a simple fact: you couldn't run a company without people. That fact is
+                getting weaker, and when it's gone, the answer will be whatever we decide it is. I'd rather we decide it on purpose,
+                before the machines are doing all the work and we're left arguing about it in our extra free time. Keynes would
+                at least be pleased about that part.
+            </p>
+
+            <section class="sources">
+                <h2>Sources</h2>
+                <ol>
+                    <li id="src-1"><a href="https://quoteinvestigator.com/2011/11/16/robots-buy-cars/" target="_blank" rel="noopener">How Will You Get Robots to Pay Union Dues? How Will You Get Robots to Buy Cars?</a>, Quote Investigator. Origin of the Reuther anecdote and its later variants.</li>
+                    <li id="src-2"><a href="https://www.thetruthaboutcars.com/2014/10/henry-ford-paid-workers-5-day-wouldnt-quit-afford-model-ts/" target="_blank" rel="noopener">Henry Ford Paid His Workers $5 a Day So They Wouldn't Quit, Not So They Could Afford Model Ts</a>, The Truth About Cars, October 2014.</li>
+                    <li id="src-3"><a href="https://www.kingsreview.co.uk/essays/tracking-keynes-through-kings-economics-genes-and-the-possibilities-for-our-grandchildren" target="_blank" rel="noopener">Tracking Keynes through King's: economics, genes and the possibilities for our grandchildren</a>, King's Review. On Keynes' 1930 essay "Economic Possibilities for our Grandchildren".</li>
+                    <li id="src-4"><a href="https://fortune.com/2025/01/27/microsoft-ceo-satya-nadella-deepseek-optimism-jevons-paradox" target="_blank" rel="noopener">Satya Nadella believes Chinese AI startup DeepSeek could be a win for tech, even as Microsoft's shares tumble</a>, Fortune, January 2025.</li>
+                    <li id="src-5"><a href="https://equitablegrowth.org/must-read-erik-brynjolfsson-and-andrew-mcafee-labor-in-the-second-machine-age/" target="_blank" rel="noopener">Erik Brynjolfsson and Andrew McAfee: Labor in the Second Machine Age</a>, Equitable Growth. Leontief's horse comparison and US horse population figures.</li>
+                    <li id="src-6"><a href="https://www.axios.com/2025/05/28/ai-jobs-white-collar-unemployment-anthropic" target="_blank" rel="noopener">Behind the Curtain: A white-collar bloodbath</a>, Axios, May 2025. Interview with Dario Amodei.</li>
+                    <li id="src-7"><a href="https://salon.com/2025/02/24/households-making-250k-or-more-are-driving-the-economy-report" target="_blank" rel="noopener">Households making $250K or more are driving the economy: report</a>, Salon, February 2025. Coverage of Moody's Analytics estimates reported by the Wall Street Journal.</li>
+                    <li id="src-8"><a href="https://intelligence-curse.ai/intelligence-curse.pdf" target="_blank" rel="noopener">The Intelligence Curse</a>, Luke Drago &amp; Rudolf Laine, April 2025.</li>
+                    <li id="src-9"><a href="https://www.helsinki.fi/en/news/fair-society/basic-income-experiment-finland-yields-surprising-results" target="_blank" rel="noopener">The basic income experiment in Finland yields surprising results</a>, University of Helsinki.</li>
+                    <li id="src-10"><a href="https://www.povertyactionlab.org/updates/august-2024-north-america-newsletter" target="_blank" rel="noopener">August 2024 North America Newsletter</a>, J-PAL. Results of the OpenResearch unconditional cash study.</li>
+                    <li id="src-11"><a href="https://fortune.com/2017/02/18/bill-gates-robot-taxes-automation" target="_blank" rel="noopener">Bill Gates Says Robots Should Be Taxed Like Workers</a>, Fortune, February 2017. Coverage of his interview with Quartz.</li>
+                    <li id="src-12"><a href="https://moores.samaltman.com/" target="_blank" rel="noopener">Moore's Law for Everything</a>, Sam Altman, March 2021.</li>
+                </ol>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <span>© 2026 José Antonio Nicolás Navarro</span>
+            <a href="../index.html">← back to home</a>
+        </div>
+    </footer>
+
+</body>
+</html>
