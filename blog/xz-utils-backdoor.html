@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The story of the xz-utils backdoor (CVE-2024-3094): a two-year social engineering campaign against a lone maintainer, a payload hidden in test files, and the half-second delay that exposed it.">
+    <meta property="og:title" content="Half a Second Too Slow: the xz-utils Backdoor">
+    <meta property="og:description" content="How a two-year social engineering campaign nearly backdoored SSH across Linux, and how it was caught.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://tohzzicklao.github.io/blog/xz-utils-backdoor.html">
+    <meta name="theme-color" content="#05080d">
+    <link rel="canonical" href="https://tohzzicklao.github.io/blog/xz-utils-backdoor.html">
+    <title>The xz-utils Backdoor | José Antonio Nicolás</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2305080d'/%3E%3Cpath d='M50 14 82 26v24c0 19-13 31-32 37C31 81 18 69 18 50V26z' fill='none' stroke='%2300f0b5' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%237c5cff'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05080d;
+            --panel: rgba(12, 18, 28, 0.72);
+            --line: rgba(0, 240, 181, 0.12);
+            --line-strong: rgba(0, 240, 181, 0.35);
+            --text: #e6edf5;
+            --muted: #8794a6;
+            --dim: #566275;
+            --cyber: #00f0b5;
+            --neural: #7c5cff;
+            --alert: #ff4d6d;
+            --glow-c: rgba(0, 240, 181, 0.25);
+            --glow-n: rgba(124, 92, 255, 0.25);
+            --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+            --display: 'Space Grotesk', 'Inter', sans-serif;
+            --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::selection { background: var(--cyber); color: var(--bg); }
+        a { color: inherit; }
+        strong { color: #fff; font-weight: 600; }
+        code {
+            font-family: var(--mono);
+            font-size: 0.85em;
+            padding: 0.1rem 0.35rem;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.07);
+            word-break: break-word;
+        }
+
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(600px 400px at 15% 10%, var(--glow-n), transparent 70%),
+                radial-gradient(700px 500px at 90% 40%, rgba(0, 240, 181, 0.10), transparent 70%);
+        }
+        main, footer, .nav { position: relative; z-index: 1; }
+
+        /* ══════════ NAV ══════════ */
+        .nav {
+            position: sticky; top: 0;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+            background: rgba(5, 8, 13, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--line);
+        }
+        .brand {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .brand .p { color: var(--cyber); }
+        .brand .h { color: var(--neural); }
+        .back {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 0.4rem 0.7rem;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .back:hover { color: var(--cyber); background: rgba(255,255,255,0.04); }
+
+        /* ══════════ ARTICLE ══════════ */
+        .wrap { max-width: 780px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+        .post-head { padding: 4rem 0 2.5rem; }
+        .sec-label {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--cyber);
+            letter-spacing: 0.08em;
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.9rem;
+        }
+        .sec-label::after {
+            content: ''; width: 48px; height: 1px;
+            background: linear-gradient(90deg, var(--cyber), transparent);
+        }
+        h1 {
+            font-family: var(--display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        h1 .grad {
+            background: linear-gradient(100deg, var(--cyber) 0%, #5fd4ff 45%, var(--neural) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+        }
+        .meta { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); }
+        .lead { color: var(--muted); font-size: 1.08rem; margin-top: 1.5rem; }
+        .lead + .lead { margin-top: 1rem; }
+
+        .panel {
+            position: relative;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .callout {
+            padding: 1.3rem 1.5rem;
+            margin: 0 0 1.3rem;
+            border-color: rgba(255, 77, 109, 0.35);
+            background: rgba(255, 77, 109, 0.05);
+            color: var(--muted);
+        }
+        .callout strong { color: var(--alert); }
+
+        .quote {
+            margin: 1.4rem 0;
+            padding: 1.1rem 1.4rem;
+            border-left: 2px solid var(--neural);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+        .quote span { display: block; margin-top: 0.5rem; font-size: 0.72rem; color: var(--dim); }
+
+        .outro { color: var(--muted); margin: 2rem 0 0; }
+
+        .prose { margin: 2.5rem 0; }
+        .prose h2 {
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.4rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .prose h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .prose p { color: var(--muted); margin-bottom: 1rem; }
+        .prose em { color: var(--text); font-style: normal; }
+        .table-wrap { overflow-x: auto; margin: 0 0 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { text-align: left; vertical-align: top; padding: 0.75rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { font-family: var(--mono); font-size: 0.7rem; font-weight: 500; color: var(--cyber); text-transform: uppercase; letter-spacing: 0.06em; border-bottom-color: var(--line); }
+        td { color: var(--muted); min-width: 9rem; }
+        td:first-child { color: var(--text); white-space: nowrap; min-width: 0; font-family: var(--mono); font-size: 0.8rem; }
+        tr:last-child td { border-bottom: none; }
+
+        .lead, .prose p, .outro { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+        .cite { font-family: var(--mono); font-size: 0.65em; line-height: 0; margin-left: 0.1em; }
+        .cite a { color: var(--cyber); text-decoration: none; }
+        .cite a:hover { text-decoration: underline; }
+        .sources li { scroll-margin-top: 90px; }
+        .sources li:target { color: var(--text); }
+        .sources { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+        .sources h2 { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; color: var(--cyber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.9rem; }
+        .sources ol { padding-left: 1.3rem; display: grid; gap: 0.5rem; }
+        .sources li { color: var(--dim); font-size: 0.82rem; }
+        .sources li::marker { font-family: var(--mono); color: var(--dim); }
+        .sources a { color: var(--muted); text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+        .sources a:hover { color: var(--cyber); }
+
+        /* diagrams */
+        .fig { margin: 1.6rem 0; }
+        .fig-scroll { overflow-x: auto; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        .fig svg { display: block; width: 100%; min-width: 520px; height: auto; }
+        .fig figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); margin-top: 0.6rem; text-align: center; }
+        .d-box { fill: rgba(255,255,255,0.025); stroke: var(--line-strong); stroke-width: 1.2; }
+        .d-box.hw { fill: rgba(124,92,255,0.07); stroke: rgba(124,92,255,0.5); }
+        .d-box.hot { fill: rgba(255,77,109,0.08); stroke: rgba(255,77,109,0.6); }
+        .d-h { font-family: var(--mono); font-size: 13px; fill: var(--cyber); letter-spacing: 0.05em; }
+        .d-t { font-family: var(--display); font-size: 15px; font-weight: 600; fill: var(--text); }
+        .d-s { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+        .d-m { font-family: var(--mono); font-size: 12px; fill: var(--text); }
+        .d-m.ok { fill: var(--cyber); }
+        .d-m.alert { fill: var(--alert); }
+        .d-arrow { stroke: var(--cyber); stroke-width: 1.5; }
+        .d-arrow.hot { stroke: var(--alert); }
+        .d-head { fill: var(--cyber); }
+        .d-head.hot { fill: var(--alert); }
+
+        /* ══════════ FOOTER ══════════ */
+        footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--line);
+            padding: 1.8rem 0;
+        }
+        footer .wrap {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+            font-family: var(--mono); font-size: 0.75rem; color: var(--dim);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyber); }
+
+        a:focus-visible {
+            outline: 2px solid var(--cyber);
+            outline-offset: 3px;
+            border-radius: 8px;
+        }
+
+        @media print {
+            .bg-glow, .nav { display: none !important; }
+            body { background: #fff; color: #111; }
+            strong, h1 .grad { color: #111; -webkit-text-fill-color: #111; }
+            .panel { background: none; border-color: #ccc; backdrop-filter: none; break-inside: avoid; }
+            .fig-scroll { background: #05080d; }
+            p, li, .meta { color: #333 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <nav class="nav">
+        <a href="../index.html" class="brand"><span class="p">jose@</span><span class="h">ai-sec</span>:~$</a>
+        <a href="index.html" class="back">cd ../blog</a>
+    </nav>
+
+    <main>
+        <article class="wrap">
+            <header class="post-head">
+                <div class="sec-label">BLOG // DEEP DIVE</div>
+                <h1>Half a second too slow: <span class="grad">the xz-utils backdoor</span></h1>
+                <div class="meta">July 7, 2026 · José Antonio Nicolás Navarro</div>
+                <p class="lead">
+                    In March 2024, a database developer noticed that his SSH logins were taking about half a second longer than
+                    they should. Most of us would have blamed the Wi-Fi. He started digging instead, and ended up exposing what
+                    may be the most patient and carefully engineered supply chain attack ever made public.
+                </p>
+                <p class="lead">
+                    The target wasn't a company or a government. It was a compression library maintained, for most of its life, by
+                    one volunteer. The weapon wasn't an exploit. It was <strong>two years of being helpful</strong>, and a few
+                    well-placed emails about how slow things were.
+                </p>
+            </header>
+
+            <div class="panel callout">
+                <strong>Before anyone gets ideas:</strong> this is an educational analysis. Everything in it comes from information
+                already publicly available (the original disclosure, public timelines, the maintainer's statements and public
+                technical analyses), all linked in the sources at the bottom. I haven't analysed the backdoor binary myself, and the
+                technical parts stay at the level of how it worked, not how to rebuild it. The interesting part, honestly, isn't the
+                code anyway. It's the people.
+            </div>
+
+            <section class="prose">
+                <h2><span>01</span>The most boring critical software you've never thought about</h2>
+                <p>
+                    XZ Utils is a data compression package. Its library, <code>liblzma</code>, is installed on essentially every
+                    Linux distribution, because package managers, kernels and countless tools need to decompress things. It's the
+                    kind of software that only gets noticed when it breaks, which is to say: never.
+                </p>
+                <p>
+                    For years it was maintained by Lasse Collin, largely on his own, in his free time. If you've seen XKCD's
+                    "Dependency" comic, the one where all of modern digital infrastructure rests on a tiny block labelled as
+                    a project some random person has been thanklessly maintaining since 2003, you already know the shape of
+                    this story.<sup class="cite"><a href="#src-7">7</a></sup> Someone else had clearly seen it too.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>02</span>Act I: a helpful stranger</h2>
+                <p>
+                    On October 29, 2021, a contributor calling themselves <strong>Jia Tan</strong> sent their first patch to the xz
+                    mailing list. It added an <code>.editorconfig</code> file. A month later came a fix for a reproducible build problem.
+                    Then more small, competent, entirely legitimate patches.<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <p>
+                    That's the part that makes this attack so unsettling. For a long time, Jia Tan wasn't pretending to be a good
+                    contributor. Jia Tan <em>was</em> a good contributor. The kind every overworked maintainer dreams of: reliable,
+                    polite, low-maintenance. Exactly what you'd build if you were building a key to someone else's house.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>03</span>Act II: the pressure campaign</h2>
+                <p>
+                    In April 2022, a new name appeared on the list. "Jigar Kumar" complained that patches weren't landing: "Patches
+                    spend years on this mailing list." A month later: "Over 1 month and no closer to being merged." In June:
+                    "Progress will not happen until there is new maintainer."<sup class="cite"><a href="#src-2">2</a></sup>
+                    Another account, "Dennis Ens", joined in asking whether the project was even maintained. Neither had much of a
+                    history before or after. Both are widely believed to have been sock puppets.<sup class="cite"><a href="#src-2">2</a>,<a href="#src-3">3</a></sup>
+                </p>
+                <p>
+                    On June 8, 2022, Collin replied with a level of honesty that is hard to read in hindsight:
+                </p>
+                <div class="panel quote">
+                    "I haven't lost interest but my ability to care has been fairly limited mostly due to longterm mental health
+                    issues but also due to some other things."
+                    <span>Lasse Collin, xz-devel, June 2022<sup class="cite"><a href="#src-2">2</a></sup></span>
+                </div>
+                <p>
+                    In the same message, he mentioned that Jia Tan had been helping him off-list and might have a bigger role in the
+                    future. Two weeks later, Dennis Ens wrote back: "I am sorry about your mental health issues, but its important
+                    to be aware of your own limits."<sup class="cite"><a href="#src-2">2</a></sup> Sympathy and pressure in a single
+                    sentence. By June 29, Collin was describing Jia Tan as "practically a co-maintainer already".
+                </p>
+                <p>
+                    I work on detecting social engineering for a living, and this is a textbook case. No urgency about money, no
+                    suspicious link. Just a manufactured problem (the project is too slow), a manufactured crowd (several voices
+                    saying so), and a convenient solution already standing in the room. It works on people in finance departments,
+                    and it works on open source maintainers. It works best on people who are tired.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>04</span>Act III: the keys to the house</h2>
+                <p>
+                    What followed was a slow, methodical accumulation of control. Each step was small and plausible on its own; it
+                    only looks sinister when you line them up:<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Date</th><th>What happened</th><th>Why it mattered</th></tr></thead>
+                        <tbody>
+                            <tr><td>Oct 2022</td><td>Jia Tan joins the project's GitHub organization</td><td>A step towards maintainer access</td></tr>
+                            <tr><td>Dec 2022</td><td>Merges commits directly into the repository</td><td>Commit access confirmed</td></tr>
+                            <tr><td>Mar 2023</td><td>Tags and builds release 5.4.2, the first by Jia Tan</td><td>Now signs releases</td></tr>
+                            <tr><td>Mar 2023</td><td>Changes the OSS-Fuzz contact address to their own</td><td>Fuzzing bug reports go to Jia Tan</td></tr>
+                            <tr><td>Jun 2023</td><td>"Hans Jansen" contributes CRC code using GNU indirect functions (ifunc)</td><td>Provides the hook the backdoor later uses</td></tr>
+                            <tr><td>Jul 2023</td><td>Jia Tan disables ifunc in OSS-Fuzz builds, citing a sanitizer incompatibility</td><td>Keeps fuzzers away from that code path</td></tr>
+                            <tr><td>Jan 2024</td><td>Moves the project website to GitHub Pages</td><td>Controls the project's web presence</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>
+                    There's even a small extra: in February 2024, a subtle typo in a configure check quietly broke detection of
+                    Landlock, a Linux sandboxing feature.<sup class="cite"><a href="#src-2">2</a></sup> Not part of the backdoor itself.
+                    Just a bit of tidying up the neighbourhood before moving in.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>05</span>Hiding in plain sight</h2>
+                <p>
+                    On February 23, 2024, the payload went in. Not as code, but as two binary files in the test suite, with
+                    reassuringly boring names like <code>bad-3-corrupt_lzma2.xz</code>.<sup class="cite"><a href="#src-1">1</a>,<a href="#src-2">2</a></sup>
+                    A compression library is <em>supposed</em> to have corrupt compressed files in its tests. Nobody reviews
+                    binary test fixtures byte by byte. As Andres Freund later noted, they weren't even used by any test in 5.6.0.<sup class="cite"><a href="#src-1">1</a></sup>
+                </p>
+                <p>
+                    The other half never touched the git repository at all. The release tarballs for 5.6.0 and 5.6.1 shipped a
+                    modified <code>m4/build-to-host.m4</code>, an autotools file that is normally generated and that nobody reads.
+                    During the build, it extracted the payload from the test files and spliced it into <code>liblzma</code>, but only
+                    under very specific conditions: x86-64 Linux, built with gcc and the GNU linker, as part of a Debian or RPM
+                    package build.<sup class="cite"><a href="#src-1">1</a></sup> In other words: exactly where distributions build
+                    the packages that end up on servers, and nowhere a curious developer would casually look.
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 236" role="img" aria-label="The git repository contains the source code and binary test files hiding the payload. The release tarball contains the same files plus a modified build script. When that tarball is built as a Debian or RPM package on x86-64 with gcc, the backdoor is injected into liblzma; any other build produces a clean library."><defs><marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="16" width="260" height="96" rx="8"/><text class="d-h" x="34" y="38">GIT REPOSITORY</text><text class="d-m" x="34" y="62">source code</text><text class="d-m alert" x="34" y="82">tests/files/*.xz (blobs)</text><text class="d-s" x="34" y="102">what reviewers read</text><rect class="d-box hw" x="320" y="16" width="260" height="96" rx="8"/><text class="d-h" x="334" y="38">RELEASE TARBALL</text><text class="d-m" x="334" y="62">same files, plus</text><text class="d-m alert" x="334" y="82">m4/build-to-host.m4</text><text class="d-s" x="334" y="102">what distributions build</text><line class="d-arrow" x1="280" y1="64" x2="316" y2="64" marker-end="url(#arr1)"/><line class="d-arrow" x1="380" y1="112" x2="170" y2="152" marker-end="url(#arr1)"/><line class="d-arrow hot" x1="480" y1="112" x2="480" y2="152" marker-end="url(#arr1h)"/><rect class="d-box" x="20" y="156" width="260" height="36" rx="8"/><text class="d-m ok" x="34" y="179">any other build → clean</text><rect class="d-box hot" x="320" y="156" width="260" height="36" rx="8"/><text class="d-m alert" x="334" y="179">deb/rpm · x86-64 · gcc → backdoor</text><text class="d-s" x="300" y="222" text-anchor="middle">the payload lived in git; the script that unlocked it only in the tarball</text></svg></div>
+                    <figcaption>Fig. 1 · Two halves, two places. Reviewing either one alone shows nothing alarming.</figcaption>
+                </figure>
+                <p>
+                    5.6.0 was released on February 24, 2024. Shortly after, Red Hat-based systems started seeing Valgrind errors in
+                    <code>liblzma</code>. Jia Tan responded the way any diligent maintainer would: with a fix. Version 5.6.1, released
+                    on March 9, quietly updated the backdoor so it would stop tripping Valgrind.<sup class="cite"><a href="#src-2">2</a></sup>
+                    The backdoor got a bug fix release. Some legitimate projects can only dream of that level of maintenance.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>06</span>Why SSH?</h2>
+                <p>
+                    Here's the clever bit. OpenSSH doesn't use <code>liblzma</code>. But several distributions, including Debian and
+                    Fedora, patch <code>sshd</code> to notify systemd when it starts, and that pulls in <code>libsystemd</code>, which
+                    does depend on <code>liblzma</code>.<sup class="cite"><a href="#src-1">1</a></sup> So a compression library ends up
+                    loaded inside the process that guards remote access to the machine. Nobody designed that. It just happened, one
+                    reasonable dependency at a time.
+                </p>
+                <p>
+                    Once inside <code>sshd</code>, the backdoor used the ifunc mechanism added the year before to run code very early
+                    during loading, and redirected <code>RSA_public_decrypt</code>, a function OpenSSH uses while checking keys
+                    during login, to its own code.<sup class="cite"><a href="#src-1">1</a></sup> It also checked its environment
+                    carefully before doing anything: it only activated when running as <code>/usr/sbin/sshd</code> and seemed to
+                    avoid debuggers.<sup class="cite"><a href="#src-1">1</a></sup>
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 620 248" role="img" aria-label="sshd links libsystemd through a distribution patch, which links liblzma 5.6, which hijacks RSA_public_decrypt. An SSH certificate carrying a hidden command is checked for the attacker's Ed448 signature: without it, login continues normally; with it, the command runs as root."><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="16" width="100" height="56" rx="8"/><text class="d-t" x="70" y="42" text-anchor="middle">sshd</text><text class="d-s" x="70" y="60" text-anchor="middle">OpenSSH</text><line class="d-arrow" x1="120" y1="44" x2="136" y2="44" marker-end="url(#arr2)"/><rect class="d-box" x="140" y="16" width="130" height="56" rx="8"/><text class="d-t" x="205" y="42" text-anchor="middle">libsystemd</text><text class="d-s" x="205" y="60" text-anchor="middle">distro patch</text><line class="d-arrow" x1="270" y1="44" x2="286" y2="44" marker-end="url(#arr2)"/><rect class="d-box hot" x="290" y="16" width="130" height="56" rx="8"/><text class="d-t" x="355" y="42" text-anchor="middle">liblzma</text><text class="d-s" x="355" y="60" text-anchor="middle">5.6.0 / 5.6.1</text><line class="d-arrow hot" x1="420" y1="44" x2="436" y2="44" marker-end="url(#arr2h)"/><rect class="d-box hot" x="440" y="16" width="160" height="56" rx="8"/><text class="d-m alert" x="520" y="42" text-anchor="middle">RSA_public_decrypt</text><text class="d-s" x="520" y="60" text-anchor="middle">hijacked via ifunc</text><rect class="d-box hw" x="20" y="112" width="270" height="52" rx="8"/><text class="d-m" x="34" y="134">SSH certificate from client</text><text class="d-s" x="34" y="153">may carry a hidden, encrypted command</text><line class="d-arrow" x1="290" y1="138" x2="326" y2="138" marker-end="url(#arr2)"/><rect class="d-box" x="330" y="112" width="270" height="52" rx="8"/><text class="d-m" x="344" y="134">signed with attacker's key?</text><text class="d-s" x="344" y="153">Ed448, bound to this server</text><line class="d-arrow hot" x1="520" y1="72" x2="520" y2="108" marker-end="url(#arr2h)"/><line class="d-arrow" x1="400" y1="164" x2="160" y2="198" marker-end="url(#arr2)"/><line class="d-arrow hot" x1="520" y1="164" x2="520" y2="198" marker-end="url(#arr2h)"/><rect class="d-box" x="20" y="202" width="270" height="36" rx="8"/><text class="d-m ok" x="34" y="225">no → normal login, just slower</text><rect class="d-box hot" x="330" y="202" width="270" height="36" rx="8"/><text class="d-m alert" x="344" y="225">yes → command runs as root</text></svg></div>
+                    <figcaption>Fig. 2 · From a compression library to remote root, via a dependency nobody chose on purpose.</figcaption>
+                </figure>
+                <p>
+                    Public analyses of the payload later showed what it was for. A client could hide an encrypted command inside the
+                    key of an SSH certificate. If, and only if, that command carried a valid signature from the attacker's
+                    <strong>Ed448</strong> key, tied to the specific server's host key, the backdoor executed it with
+                    <code>system()</code>, before any authentication and as root.<sup class="cite"><a href="#src-5">5</a></sup> Anyone
+                    else got a perfectly normal login.
+                </p>
+                <p>
+                    That last detail is what makes it professional. This wasn't a hole anyone could use; it was a door with exactly
+                    one key. Scanners wouldn't find it, other attackers couldn't hijack it, and without the private key you couldn't
+                    even prove it did anything. As Alex Stamos put it, it "could have been the most widespread and effective backdoor
+                    ever planted in any software product".<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>07</span>Half a second</h2>
+                <p>
+                    And then it was all undone by a benchmark. Andres Freund, a PostgreSQL developer working at Microsoft, had been noticing
+                    "a few odd symptoms" on his Debian unstable machines for weeks: SSH logins using a lot of CPU, and Valgrind
+                    complaining about <code>liblzma</code>. He measured it. A failed SSH login that used to take
+                    <code>0.299s</code> now took <code>0.807s</code>.<sup class="cite"><a href="#src-1">1</a></sup> He dug in, found
+                    the injected build script, and on March 29, 2024, posted to the oss-security mailing list:
+                </p>
+                <div class="panel quote">
+                    "The upstream xz repository and the xz tarballs have been backdoored."
+                    <span>Andres Freund, oss-security, March 29, 2024<sup class="cite"><a href="#src-1">1</a></sup></span>
+                </div>
+                <p>
+                    In the same post, he described himself as "*not* a security researcher, nor a reverse engineer".<sup class="cite"><a href="#src-1">1</a></sup>
+                    Which is, frankly, a little humbling for those of us who are.
+                </p>
+                <p>
+                    The timing was tight. In the weeks before, Jia Tan and "Hans Jansen" had been asking distributions to pick up the
+                    new versions: Fedora 40 in late February, Debian in March, Ubuntu on March 28, the day before the disclosure.<sup class="cite"><a href="#src-2">2</a></sup>
+                    The backdoor had reached Debian testing and unstable, Fedora Rawhide and the Fedora 40 beta, but not the stable
+                    releases that run most servers.<sup class="cite"><a href="#src-2">2</a>,<a href="#src-3">3</a></sup> Canonical delayed the
+                    Ubuntu 24.04 beta to rebuild everything from scratch.<sup class="cite"><a href="#src-3">3</a></sup>
+                    Meanwhile, a systemd change that stopped linking <code>liblzma</code> into <code>libsystemd</code>, which would have
+                    defeated this particular route into <code>sshd</code>, had been merged weeks earlier.<sup class="cite"><a href="#src-2">2</a></sup>
+                    The attackers were racing an unrelated refactor. They lost to a stopwatch.
+                </p>
+                <p>
+                    It received CVE-2024-3094, with a CVSS score of 10.0, the maximum.<sup class="cite"><a href="#src-3">3</a></sup>
+                    Collin regained control of the project, removed Jia Tan's access and published clean releases in May 2024.<sup class="cite"><a href="#src-3">3</a>,<a href="#src-4">4</a></sup>
+                    For the record, in August 2025 researchers at Binarly still found the backdoor inside some Debian images on Docker
+                    Hub, which Debian declined to remove, calling them historical artifacts.<sup class="cite"><a href="#src-3">3</a></sup>
+                    Technically accurate. The best kind of accurate.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>08</span>Who was Jia Tan?</h2>
+                <p>
+                    Nobody knows, at least not publicly. The name, the time zones in the commits and the accounts around it have all
+                    been picked apart, and none of it leads anywhere solid, which is itself a kind of answer. Two-plus years of patient
+                    cover, multiple coordinated personas and a payload built to be used by exactly one party is not how hobbyists
+                    work. Dave Aitel suggested the pattern fits APT29, linked to Russia's SVR; others argued it could be any capable
+                    state or a well-resourced group.<sup class="cite"><a href="#src-3">3</a></sup> I'm not going to pretend I know better.
+                </p>
+                <p>
+                    What we do know is that it wasn't a one-off idea. In April 2024, the OpenSSF and OpenJS Foundation warned that
+                    the xz case "may not be an isolated incident", after OpenJS received a series of suspicious emails from different
+                    names urging it to make unfamiliar people maintainers of a popular JavaScript project, to fix unspecified
+                    "critical vulnerabilities". They saw a similar pattern in two other projects.<sup class="cite"><a href="#src-6">6</a></sup>
+                    Same playbook, less patience.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>09</span>What defenders should take from this</h2>
+                <p>
+                    <strong>The attack surface was a person.</strong> Every technical step depended on Jia Tan first becoming
+                    trusted, and that trust came from a social engineering campaign aimed at someone who was overworked and honest
+                    about it. Code review, signing and CI all worked as designed. They just trusted the wrong maintainer.
+                </p>
+                <p>
+                    <strong>What you review must be what you build.</strong> Half the backdoor lived in a release tarball that didn't
+                    match the repository. Reproducible builds, building from tagged source instead of uploaded archives, and treating
+                    binary blobs in a repository as code all close that gap. The OpenSSF's list of warning signs reads like a summary of
+                    this story: unknown people pushing hard for maintainer status, endorsements from other unknown accounts, binary
+                    blobs in pull requests, changes to build and release practices, and manufactured urgency.<sup class="cite"><a href="#src-6">6</a></sup>
+                </p>
+                <p>
+                    <strong>Critical infrastructure needs to be funded like critical infrastructure.</strong> A single tired
+                    volunteer was the last line of defence for SSH on a large share of Linux servers. That's not a failure of
+                    the volunteer. It's a failure of everyone who depended on his work without ever asking how he was doing,
+                    until someone with very different intentions did.
+                </p>
+                <p>
+                    And finally: <strong>luck is not a strategy</strong>. This was caught because one person cared about half a
+                    second, at the right time, on the right distribution. It's worth asking how many similar attempts didn't add any
+                    latency.
+                </p>
+            </section>
+
+            <p class="outro">
+                What stays with me about xz isn't the cleverness of the payload, although it's clever. It's that the most
+                sophisticated part of the operation was kindness: a reliable contributor, a sympathetic tone, an offer to help. Most
+                security controls are designed to stop strangers. This one was stopped by a stranger, too, just a different one,
+                who happened to be in a hurry to log in.
+            </p>
+
+            <section class="sources">
+                <h2>Sources</h2>
+                <ol>
+                    <li id="src-1"><a href="https://www.openwall.com/lists/oss-security/2024/03/29/4" target="_blank" rel="noopener">backdoor in upstream xz/liblzma leading to ssh server compromise</a>, Andres Freund, oss-security, March 29, 2024. Original disclosure, timings, build conditions, sshd hook.</li>
+                    <li id="src-2"><a href="https://research.swtch.com/xz-timeline" target="_blank" rel="noopener">Timeline of the xz open source attack</a>, Russ Cox. Mailing list quotes, maintainer handover, releases and distribution pushes.</li>
+                    <li id="src-3"><a href="https://en.wikipedia.org/wiki/XZ_Utils_backdoor" target="_blank" rel="noopener">XZ Utils backdoor</a>, Wikipedia. CVE and severity, affected distributions, responses, attribution debate, Docker Hub images.</li>
+                    <li id="src-4"><a href="https://tukaani.org/xz-backdoor/" target="_blank" rel="noopener">XZ Utils backdoor</a>, Lasse Collin, tukaani.org. Maintainer's statement and recovery timeline.</li>
+                    <li id="src-5"><a href="https://github.com/amlweems/xzbot" target="_blank" rel="noopener">xzbot</a>, Anthony Weems. Public analysis of the payload format, Ed448 signature and host-key binding.</li>
+                    <li id="src-6"><a href="https://openssf.org/blog/2024/04/15/open-source-security-openssf-and-openjs-foundations-issue-alert-for-social-engineering-takeovers-of-open-source-projects/" target="_blank" rel="noopener">OpenSSF and OpenJS Foundations Issue Alert for Social Engineering Takeovers of Open Source Projects</a>, OpenSSF, April 15, 2024.</li>
+                    <li id="src-7"><a href="https://xkcd.com/2347/" target="_blank" rel="noopener">Dependency</a>, XKCD 2347, Randall Munroe.</li>
+                </ol>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <span>© 2026 José Antonio Nicolás Navarro</span>
+            <a href="../index.html">← back to home</a>
+        </div>
+    </footer>
+
+</body>
+</html>
