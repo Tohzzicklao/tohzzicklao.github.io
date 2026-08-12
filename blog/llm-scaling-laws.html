@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A history of LLM scaling laws: from Baidu's power laws and Kaplan et al. to Chinchilla, overtrained small models, the data wall and test-time compute.">
+    <meta property="og:title" content="Bigger Is Predictable: a Short History of LLM Scaling Laws">
+    <meta property="og:description" content="A history of LLM scaling laws, from Kaplan to Chinchilla to test-time compute.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://tohzzicklao.github.io/blog/llm-scaling-laws.html">
+    <meta name="theme-color" content="#05080d">
+    <link rel="canonical" href="https://tohzzicklao.github.io/blog/llm-scaling-laws.html">
+    <title>LLM Scaling Laws | José Antonio Nicolás</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2305080d'/%3E%3Cpath d='M50 14 82 26v24c0 19-13 31-32 37C31 81 18 69 18 50V26z' fill='none' stroke='%2300f0b5' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%237c5cff'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05080d;
+            --panel: rgba(12, 18, 28, 0.72);
+            --line: rgba(0, 240, 181, 0.12);
+            --line-strong: rgba(0, 240, 181, 0.35);
+            --text: #e6edf5;
+            --muted: #8794a6;
+            --dim: #566275;
+            --cyber: #00f0b5;
+            --neural: #7c5cff;
+            --alert: #ff4d6d;
+            --glow-c: rgba(0, 240, 181, 0.25);
+            --glow-n: rgba(124, 92, 255, 0.25);
+            --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+            --display: 'Space Grotesk', 'Inter', sans-serif;
+            --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::selection { background: var(--cyber); color: var(--bg); }
+        a { color: inherit; }
+        strong { color: #fff; font-weight: 600; }
+        code {
+            font-family: var(--mono);
+            font-size: 0.85em;
+            padding: 0.1rem 0.35rem;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.07);
+            word-break: break-word;
+        }
+
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(600px 400px at 15% 10%, var(--glow-n), transparent 70%),
+                radial-gradient(700px 500px at 90% 40%, rgba(0, 240, 181, 0.10), transparent 70%);
+        }
+        main, footer, .nav { position: relative; z-index: 1; }
+
+        /* ══════════ NAV ══════════ */
+        .nav {
+            position: sticky; top: 0;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+            background: rgba(5, 8, 13, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--line);
+        }
+        .brand {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .brand .p { color: var(--cyber); }
+        .brand .h { color: var(--neural); }
+        .back {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 0.4rem 0.7rem;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .back:hover { color: var(--cyber); background: rgba(255,255,255,0.04); }
+
+        /* ══════════ ARTICLE ══════════ */
+        .wrap { max-width: 780px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+        .post-head { padding: 4rem 0 2.5rem; }
+        .sec-label {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--cyber);
+            letter-spacing: 0.08em;
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.9rem;
+        }
+        .sec-label::after {
+            content: ''; width: 48px; height: 1px;
+            background: linear-gradient(90deg, var(--cyber), transparent);
+        }
+        h1 {
+            font-family: var(--display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        h1 .grad {
+            background: linear-gradient(100deg, var(--cyber) 0%, #5fd4ff 45%, var(--neural) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+        }
+        .meta { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); }
+        .lead { color: var(--muted); font-size: 1.08rem; margin-top: 1.5rem; }
+        .lead + .lead { margin-top: 1rem; }
+
+        .panel {
+            position: relative;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .formula {
+            margin: 1.4rem 0;
+            padding: 1.2rem 1.4rem;
+            font-family: var(--mono);
+            font-size: 1rem;
+            color: var(--text);
+            text-align: center;
+            overflow-x: auto;
+        }
+        .formula .v { color: var(--cyber); }
+        .formula .k { color: var(--neural); }
+        .formula small { display: block; margin-top: 0.5rem; font-size: 0.72rem; color: var(--dim); }
+
+        .outro { color: var(--muted); margin: 2rem 0 0; }
+
+        .prose { margin: 2.5rem 0; }
+        .prose h2 {
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.4rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .prose h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .prose p { color: var(--muted); margin-bottom: 1rem; }
+        .prose em { color: var(--text); font-style: normal; }
+        .table-wrap { overflow-x: auto; margin: 0 0 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { text-align: left; vertical-align: top; padding: 0.75rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { font-family: var(--mono); font-size: 0.7rem; font-weight: 500; color: var(--cyber); text-transform: uppercase; letter-spacing: 0.06em; border-bottom-color: var(--line); }
+        td { color: var(--muted); min-width: 9rem; }
+        td:first-child { color: var(--text); white-space: nowrap; min-width: 0; font-family: var(--mono); font-size: 0.8rem; }
+        tr:last-child td { border-bottom: none; }
+
+        .lead, .prose p, .outro { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+        .cite { font-family: var(--mono); font-size: 0.65em; line-height: 0; margin-left: 0.1em; }
+        .cite a { color: var(--cyber); text-decoration: none; }
+        .cite a:hover { text-decoration: underline; }
+        .sources li { scroll-margin-top: 90px; }
+        .sources li:target { color: var(--text); }
+        .sources { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+        .sources h2 { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; color: var(--cyber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.9rem; }
+        .sources ol { padding-left: 1.3rem; display: grid; gap: 0.5rem; }
+        .sources li { color: var(--dim); font-size: 0.82rem; }
+        .sources li::marker { font-family: var(--mono); color: var(--dim); }
+        .sources a { color: var(--muted); text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+        .sources a:hover { color: var(--cyber); }
+
+        /* diagrams */
+        .fig { margin: 1.6rem 0; }
+        .fig-scroll { overflow-x: auto; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        .fig svg { display: block; width: 100%; min-width: 520px; height: auto; }
+        .fig figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); margin-top: 0.6rem; text-align: center; }
+        .d-box { fill: rgba(255,255,255,0.025); stroke: var(--line-strong); stroke-width: 1.2; }
+        .d-box.hw { fill: rgba(124,92,255,0.07); stroke: rgba(124,92,255,0.5); }
+        .d-h { font-family: var(--mono); font-size: 13px; fill: var(--cyber); letter-spacing: 0.05em; }
+        .d-t { font-family: var(--display); font-size: 15px; font-weight: 600; fill: var(--text); }
+        .d-s { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+        .d-m { font-family: var(--mono); font-size: 12px; fill: var(--text); }
+        .d-m.ok { fill: var(--cyber); }
+        .d-m.alert { fill: var(--alert); }
+        .d-l { font-family: var(--mono); font-size: 11px; fill: var(--dim); }
+        .d-grid { stroke: rgba(255,255,255,0.06); stroke-width: 1; }
+        .d-axis { stroke: var(--dim); stroke-width: 1; }
+        .d-floor { stroke: var(--alert); stroke-width: 1.2; stroke-dasharray: 5 5; }
+        .d-ref { stroke: var(--neural); stroke-width: 1.2; stroke-dasharray: 4 4; }
+        .d-curve { fill: none; stroke: var(--cyber); stroke-width: 2.2; }
+        .d-dot { fill: var(--cyber); }
+        .d-bar { fill: rgba(0,240,181,0.18); stroke: var(--cyber); stroke-width: 1.2; }
+        .d-bar.n { fill: rgba(124,92,255,0.2); stroke: var(--neural); }
+        .d-arrow { stroke: var(--cyber); stroke-width: 1.5; }
+        .d-head { fill: var(--cyber); }
+
+        /* ══════════ FOOTER ══════════ */
+        footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--line);
+            padding: 1.8rem 0;
+        }
+        footer .wrap {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+            font-family: var(--mono); font-size: 0.75rem; color: var(--dim);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyber); }
+
+        a:focus-visible {
+            outline: 2px solid var(--cyber);
+            outline-offset: 3px;
+            border-radius: 8px;
+        }
+
+        @media print {
+            .bg-glow, .nav { display: none !important; }
+            body { background: #fff; color: #111; }
+            strong, h1 .grad { color: #111; -webkit-text-fill-color: #111; }
+            .panel { background: none; border-color: #ccc; backdrop-filter: none; break-inside: avoid; }
+            .fig-scroll { background: #05080d; }
+            p, li, .meta { color: #333 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <nav class="nav">
+        <a href="../index.html" class="brand"><span class="p">jose@</span><span class="h">ai-sec</span>:~$</a>
+        <a href="index.html" class="back">cd ../blog</a>
+    </nav>
+
+    <main>
+        <article class="wrap">
+            <header class="post-head">
+                <div class="sec-label">BLOG // DEEP DIVE</div>
+                <h1>Bigger is predictable: <span class="grad">a short history of LLM scaling laws</span></h1>
+                <div class="meta">August 12, 2026 · José Antonio Nicolás Navarro</div>
+                <p class="lead">
+                    Most of machine learning is empirical and messy. You change something, retrain, and hope. Scaling laws are the
+                    rare exception: a handful of curves that let you predict, before spending a single GPU-hour, roughly how good a
+                    model will be if you make it bigger, feed it more data or train it longer.
+                </p>
+                <p class="lead">
+                    Those curves are why labs were willing to spend millions, and then billions, on single training runs. They have
+                    also been revised, disputed and partially rewritten every couple of years, which is a lot for something called a law. This post walks through that story,
+                    paper by paper: <strong>what each law said, what it got wrong, and what it changed in practice</strong>.
+                </p>
+            </header>
+
+            <section class="prose">
+                <h2><span>01</span>Before the transformers: 2017</h2>
+                <p>
+                    The idea is older than GPT. In December 2017, a team at Baidu Research led by Joel Hestness trained models across
+                    four domains (machine translation, language modeling, image classification and speech recognition) on growing
+                    slices of data. In every one of them, generalization error fell as a <strong>power law</strong> of dataset
+                    size. Better architectures shifted the curve down, but didn't seem to change its slope. Model size, in turn, needed
+                    to grow only sublinearly with data.<sup class="cite"><a href="#src-1">1</a></sup>
+                </p>
+                <p>
+                    That last observation is the important one. If the exponent is a property of the problem and not of your clever
+                    architecture, then progress is less about ideas and more about <em>budget</em>. Rich Sutton made the same point
+                    more bluntly in March 2019, in an essay every ML engineer eventually gets sent: across 70 years of AI research, general methods
+                    that leverage computation have ended up beating hand-crafted knowledge "by a large margin".<sup class="cite"><a href="#src-2">2</a></sup>
+                    He called it the bitter lesson. Mostly bitter for the people who had spent careers hand-crafting that knowledge.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>02</span>Kaplan et al., 2020: the power laws</h2>
+                <p>
+                    The paper that turned the intuition into a recipe came out of OpenAI in January 2020. Jared Kaplan and colleagues
+                    (several of whom would go on to found Anthropic) trained hundreds of transformer language models and measured
+                    one thing: cross-entropy loss on held-out text. They found that it follows smooth power laws in three variables,
+                    as long as the other two aren't the bottleneck:<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+                <div class="panel formula">
+                    L(<span class="v">N</span>) ∝ <span class="v">N</span><sup>−<span class="k">0.076</span></sup> &nbsp;·&nbsp;
+                    L(<span class="v">D</span>) ∝ <span class="v">D</span><sup>−<span class="k">0.095</span></sup> &nbsp;·&nbsp;
+                    L(<span class="v">C</span>) ∝ <span class="v">C</span><sup>−<span class="k">0.050</span></sup>
+                    <small>N = parameters (non-embedding) · D = training tokens · C = training compute</small>
+                </div>
+                <p>
+                    The exponents look tiny, and they are. A loss that scales with <code>C<sup>−0.05</sup></code> needs roughly
+                    10× more compute to fall by about 11%. But the striking part wasn't the size of the gains, it was their
+                    <strong>regularity</strong>: straight lines on a log-log plot over more than six orders of magnitude. Width,
+                    depth and number of heads barely mattered within a broad range. Scale did.<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+                <p>
+                    Kaplan's team also asked the practical question: given a fixed compute budget, how should you split it between a
+                    bigger model and more data? Their answer was that large models are much more sample-efficient, so the
+                    optimal strategy was to <strong>train very large models on comparatively modest data and stop well before
+                    convergence</strong>.<sup class="cite"><a href="#src-3">3</a></sup> In their fits, the optimal model size grew
+                    roughly as <code>N ∝ C<sup>0.73</sup></code>: most of each extra unit of compute should go into parameters.
+                </p>
+                <p>
+                    Four months later, OpenAI released GPT-3: <strong>175 billion parameters</strong>, trained on about
+                    <strong>300 billion tokens</strong>.<sup class="cite"><a href="#src-4">4</a></sup> That's fewer than two tokens per
+                    parameter: a very large model that had skimmed everything roughly once. Within Kaplan's framework, it was a perfectly reasonable bet. And for two years, the industry made
+                    the same one: Gopher, Jurassic-1 and Megatron-Turing NLG all pushed parameter counts into the hundreds of billions
+                    while training data stayed around the same few hundred billion tokens.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>03</span>Chinchilla, 2022: everyone was undertrained</h2>
+                <p>
+                    In March 2022, DeepMind's Jordan Hoffmann and colleagues published what everyone now calls the Chinchilla paper.
+                    Its abstract contains one of the more consequential sentences in recent ML: "We find that current large language
+                    models are significantly undertrained".<sup class="cite"><a href="#src-5">5</a></sup> Not the most comfortable
+                    sentence to write when one of those models is Gopher, which DeepMind had trained itself a few months earlier.
+                </p>
+                <p>
+                    They trained over 400 models, from 70 million to more than 16 billion parameters, on 5 to 500 billion tokens, and
+                    estimated the compute-optimal frontier in three different ways. All three pointed the same direction: model size
+                    and training tokens should <strong>scale in equal proportion</strong>. Double the compute, and you should make the
+                    model about 1.4× bigger <em>and</em> feed it about 1.4× more data. That works out to a rule of thumb that stuck:
+                    around <strong>20 tokens per parameter</strong>.<sup class="cite"><a href="#src-5">5</a></sup>
+                </p>
+                <p>
+                    One of their three methods fits a parametric loss that I find the most intuitive way to think about scaling:
+                </p>
+                <div class="panel formula">
+                    L(<span class="v">N</span>, <span class="v">D</span>) = <span class="k">E</span> + <span class="k">A</span> / <span class="v">N</span><sup>α</sup> + <span class="k">B</span> / <span class="v">D</span><sup>β</sup>
+                    <small>E ≈ 1.69 · A ≈ 406.4 · B ≈ 410.7 · α ≈ 0.34 · β ≈ 0.28 (Hoffmann et al.)</small>
+                </div>
+                <p>
+                    Read it from left to right. <code>E</code> is the irreducible loss: the entropy of natural text itself, which no
+                    model can beat. The second term is what you lose by having a finite model, the third what you lose by having
+                    finite data. Scaling only one of them leaves the other term untouched, which is exactly what the GPT-3 generation
+                    had done: a bigger engine every year, same tank of fuel.
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 300" role="img" aria-label="Plot of the Chinchilla parametric loss with unlimited data as a function of parameter count, from 100 million to 1 trillion parameters. Loss falls from about 2.46 to 1.72, flattening towards the irreducible floor of 1.69."><line class="d-grid" x1="70" y1="40" x2="570" y2="40"/><line class="d-grid" x1="70" y1="106" x2="570" y2="106"/><line class="d-grid" x1="70" y1="172" x2="570" y2="172"/><line class="d-grid" x1="70" y1="238" x2="570" y2="238"/><line class="d-grid" x1="195" y1="40" x2="195" y2="260"/><line class="d-grid" x1="320" y1="40" x2="320" y2="260"/><line class="d-grid" x1="445" y1="40" x2="445" y2="260"/><line class="d-grid" x1="570" y1="40" x2="570" y2="260"/><line class="d-axis" x1="70" y1="260" x2="570" y2="260"/><line class="d-axis" x1="70" y1="40" x2="70" y2="260"/><text class="d-l" x="62" y="44" text-anchor="end">2.6</text><text class="d-l" x="62" y="110" text-anchor="end">2.3</text><text class="d-l" x="62" y="176" text-anchor="end">2.0</text><text class="d-l" x="62" y="242" text-anchor="end">1.7</text><text class="d-l" x="70" y="278" text-anchor="middle">100M</text><text class="d-l" x="195" y="278" text-anchor="middle">1B</text><text class="d-l" x="320" y="278" text-anchor="middle">10B</text><text class="d-l" x="445" y="278" text-anchor="middle">100B</text><text class="d-l" x="570" y="278" text-anchor="middle">1T</text><text class="d-l" x="320" y="296" text-anchor="middle">parameters N (log scale)</text><text class="d-l" x="16" y="150" text-anchor="middle" transform="rotate(-90 16 150)">loss</text><line class="d-floor" x1="70" y1="240" x2="570" y2="240"/><text class="d-m alert" x="566" y="254" text-anchor="end">E ≈ 1.69 · entropy of text</text><polyline class="d-curve" points="70,71 132.5,126 195,163 257.5,187 320,205 382.5,216 445,225 507.5,229 570,234"/><circle class="d-dot" cx="70" cy="71" r="3.5"/><circle class="d-dot" cx="195" cy="163" r="3.5"/><circle class="d-dot" cx="320" cy="205" r="3.5"/><circle class="d-dot" cx="445" cy="225" r="3.5"/><circle class="d-dot" cx="570" cy="234" r="3.5"/><text class="d-m ok" x="88" y="66">2.46</text><text class="d-m ok" x="203" y="156">2.04</text><text class="d-m ok" x="328" y="198">1.85</text><text class="d-m ok" x="453" y="218">1.76</text><text class="d-s" x="300" y="96">each 10× in parameters buys</text><text class="d-s" x="300" y="112">roughly half the previous gain</text></svg></div>
+                    <figcaption>Fig. 1 · Hoffmann et al.'s fitted loss with unlimited data (the B/D term dropped). Illustrative: the coefficients were later disputed, the shape wasn't.</figcaption>
+                </figure>
+                <p>
+                    The proof was the model itself. Chinchilla had <strong>70B parameters</strong>, a quarter of Gopher's 280B, and
+                    was trained on about four times more data with the same compute budget, roughly 1.4 trillion tokens. It beat
+                    Gopher, GPT-3, Jurassic-1 and Megatron-Turing NLG on a wide range of tasks, reaching 67.5% on MMLU, more than 7
+                    points above Gopher. And because it was smaller, it was also cheaper to fine-tune and serve.<sup class="cite"><a href="#src-5">5</a></sup>
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>04</span>Why Kaplan and Chinchilla disagreed</h2>
+                <p>
+                    Two careful teams, similar methods, very different answers (<code>N ∝ C<sup>0.73</sup></code> versus
+                    <code>N ∝ C<sup>0.5</sup></code>). Science is hard, and harder when every data point costs a GPU cluster. For a while the usual explanation was learning-rate schedules: Kaplan's runs
+                    didn't adapt the schedule to the number of training tokens, which penalised the longer runs.
+                </p>
+                <p>
+                    In 2024, Tim Pearce and Jinyeop Song offered a cleaner account. Kaplan counted only <em>non-embedding</em>
+                    parameters, and fitted mostly at small scale, where embeddings are a big share of the model. Simulating the
+                    Chinchilla study under those same conditions reproduces coefficients close to Kaplan's. Their conclusion: Kaplan
+                    overestimated how fast parameters should grow, and Chinchilla's coefficients stand.<sup class="cite"><a href="#src-6">6</a></sup>
+                </p>
+                <p>
+                    Chinchilla didn't get a free pass either. In April 2024, Tamay Besiroglu and colleagues at Epoch AI tried to replicate the
+                    parametric fit by extracting the data from the paper's plots. They found the published estimates inconsistent
+                    with the paper's own first two methods, with implausibly narrow confidence intervals; their refit agreed with
+                    those two methods instead.<sup class="cite"><a href="#src-7">7</a></sup> The headline recommendation survived. The
+                    exact numbers in the formula above are best treated as illustrative. Which is a polite way of saying I
+                    plotted them anyway.
+                </p>
+                <p>
+                    The meta-lesson is a bit uncomfortable: scaling laws are empirical fits, and small choices in what you count and how
+                    you fit can move the "optimal" answer by an order of magnitude at frontier scale.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>05</span>Emergence, or a trick of the metric?</h2>
+                <p>
+                    Smooth loss curves raised an obvious question: if loss improves gradually, why do some <em>capabilities</em> seem
+                    to switch on suddenly? In June 2022, Jason Wei and colleagues catalogued dozens of tasks, like multi-step arithmetic,
+                    where small models scored at chance and larger ones jumped well above it. They called these abilities
+                    <strong>emergent</strong>: not present in smaller models, present in larger ones, and therefore not predictable by
+                    extrapolating from the small ones.<sup class="cite"><a href="#src-8">8</a></sup>
+                </p>
+                <p>
+                    In April 2023, Rylan Schaeffer, Brando Miranda and Sanmi Koyejo pushed back. Many of those jumps, they argued,
+                    come from the metric, not the model. Exact-match accuracy on a five-digit answer is zero until every digit is right,
+                    so a model that is steadily getting better per token looks flat and then suddenly "gets it". Like a student who
+                    fails every exam by one digit until, one day, they don't. Switch to a continuous
+                    metric and the same outputs improve smoothly.<sup class="cite"><a href="#src-9">9</a></sup>
+                </p>
+                <p>
+                    I think both papers are right about something. The underlying competence does tend to scale smoothly. But users
+                    and attackers don't experience per-token log-likelihoods; they experience whether the exploit works or the
+                    answer is correct. From the outside, thresholds are real, even if the curve beneath them is a straight line.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>06</span>Beyond Chinchilla: training for inference</h2>
+                <p>
+                    Chinchilla answers a specific question: what's the best model for a fixed <em>training</em> budget? But a model
+                    that's going to serve millions of users spends far more compute on inference than it ever did in training, and
+                    inference cost scales with parameter count. Under that constraint, a smaller model trained for much longer can be
+                    the better deal, even if it's "inefficient" by Chinchilla's standard.
+                </p>
+                <p>
+                    Nikhil Sardana and colleagues formalised this at the end of 2023: if you expect high inference demand, you should
+                    train models <strong>smaller and longer than Chinchilla-optimal</strong>, and in their experiments quality kept
+                    improving at ratios of up to 10,000 tokens per parameter.<sup class="cite"><a href="#src-10">10</a></sup>
+                    Meta's Llama 3, released in April 2024, is the poster child. Both the 8B and 70B models were trained on over
+                    <strong>15 trillion tokens</strong>. Meta noted that the Chinchilla-optimal amount for the 8B model would have been
+                    around 200 billion tokens, and that performance kept improving log-linearly far beyond it.<sup class="cite"><a href="#src-11">11</a></sup>
+                    Chinchilla would have called that a waste of compute. Whoever pays the inference bill calls it a bargain.
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 240" role="img" aria-label="Bar chart on a log scale of training tokens per parameter: GPT-3 about 1.7, Chinchilla about 20, Llama 3 70B about 214, Llama 3 8B about 1,875. A dashed line marks the Chinchilla rule of thumb of 20."><line class="d-grid" x1="160" y1="20" x2="160" y2="200"/><line class="d-grid" x1="260" y1="20" x2="260" y2="200"/><line class="d-grid" x1="360" y1="20" x2="360" y2="200"/><line class="d-grid" x1="460" y1="20" x2="460" y2="200"/><line class="d-grid" x1="560" y1="20" x2="560" y2="200"/><line class="d-axis" x1="160" y1="200" x2="560" y2="200"/><text class="d-l" x="160" y="218" text-anchor="middle">1</text><text class="d-l" x="260" y="218" text-anchor="middle">10</text><text class="d-l" x="360" y="218" text-anchor="middle">100</text><text class="d-l" x="460" y="218" text-anchor="middle">1,000</text><text class="d-l" x="560" y="218" text-anchor="middle">10,000</text><text class="d-l" x="360" y="236" text-anchor="middle">training tokens per parameter (log scale)</text><text class="d-t" x="148" y="49" text-anchor="end">GPT-3</text><text class="d-l" x="148" y="64" text-anchor="end">2020 · 175B</text><rect class="d-bar n" x="160" y="34" width="23" height="32" rx="4"/><text class="d-m" x="191" y="55">~1.7</text><text class="d-t" x="148" y="93" text-anchor="end">Chinchilla</text><text class="d-l" x="148" y="108" text-anchor="end">2022 · 70B</text><rect class="d-bar" x="160" y="78" width="130" height="32" rx="4"/><text class="d-m" x="298" y="99">~20</text><text class="d-t" x="148" y="137" text-anchor="end">Llama 3 70B</text><text class="d-l" x="148" y="152" text-anchor="end">2024 · 15T tok</text><rect class="d-bar" x="160" y="122" width="233" height="32" rx="4"/><text class="d-m" x="401" y="143">~214</text><text class="d-t" x="148" y="181" text-anchor="end">Llama 3 8B</text><text class="d-l" x="148" y="196" text-anchor="end">2024 · 15T tok</text><rect class="d-bar" x="160" y="166" width="327" height="28" rx="4"/><text class="d-m" x="495" y="185">~1,875</text><line class="d-ref" x1="290" y1="20" x2="290" y2="200"/><text class="d-m" x="296" y="28" style="fill: var(--neural)">Chinchilla ≈ 20</text></svg></div>
+                    <figcaption>Fig. 2 · Tokens per parameter, computed from published model sizes and token counts. Same law, very different economics.</figcaption>
+                </figure>
+                <p>
+                    Chinchilla wasn't wrong here; it was answering a different question. The industry just moved from asking "what's
+                    the best model I can train?" to "what's the best model I can afford to run?".
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>07</span>The data wall</h2>
+                <p>
+                    Overtraining, though, makes another problem worse. If every model wants trillions of tokens, and data has to grow as
+                    fast as parameters, sooner or later you run out of internet. It's finite; it just never felt that way. Epoch AI's Pablo Villalobos and colleagues estimated
+                    that, at current trends, models would use up the effective stock of public human-written text
+                    <strong>somewhere between 2026 and 2032</strong>, or slightly earlier if models are heavily overtrained.<sup class="cite"><a href="#src-12">12</a></sup>
+                    We are, as I write this, inside that window.
+                </p>
+                <p>
+                    Compute, meanwhile, keeps growing. Epoch's tracking puts the training compute of notable models growing around
+                    <strong>4–5× per year</strong> since 2010, with bigger training clusters as the main driver since 2018.<sup class="cite"><a href="#src-13">13</a></sup>
+                    Data doesn't grow anywhere near that fast.
+                </p>
+                <p>
+                    There are partial escape hatches. Niklas Muennighoff and colleagues showed that repeating data for up to about
+                    <strong>4 epochs</strong> is nearly as good as fresh data for a fixed compute budget, but that returns fade to zero
+                    with much more repetition.<sup class="cite"><a href="#src-14">14</a></sup> Synthetic data, better filtering and
+                    multimodal data all help at the margins. None of them changes the basic picture, which Ilya Sutskever summed up
+                    in his NeurIPS talk in December 2024: compute keeps growing, but there is only one internet, and "pre-training as
+                    we know it will end".<sup class="cite"><a href="#src-15">15</a></sup> He also called data the fossil fuel of AI,
+                    which is a bleak metaphor if you remember how things went with the other one.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>08</span>A new axis: test-time compute</h2>
+                <p>
+                    If you can't make pre-training much bigger, scale something else. If the model can't get bigger, let it think
+                    longer: a strategy also popular with students during exams. In August 2024, Charlie Snell and colleagues
+                    showed that letting a model spend more compute <em>at inference time</em> (searching against a verifier, or
+                    revising its own answers) could be allocated optimally per prompt. With that strategy, in a FLOPs-matched
+                    comparison, a smaller model could outperform a <strong>14× larger</strong> one on problems where it already had a
+                    reasonable chance of succeeding.<sup class="cite"><a href="#src-16">16</a></sup>
+                </p>
+                <p>
+                    A month later OpenAI released o1, trained with reinforcement learning to produce long chains of reasoning before
+                    answering. OpenAI reported that its performance improved consistently both with more RL during training and with
+                    more time spent thinking at test time: two new scaling curves, on top of the old one.<sup class="cite"><a href="#src-17">17</a></sup>
+                    In January 2025, DeepSeek-R1 showed that this kind of reasoning could be incentivised through pure reinforcement learning, without
+                    human-labelled reasoning traces, with self-reflection and verification behaviours appearing along the way.<sup class="cite"><a href="#src-18">18</a></sup>
+                </p>
+                <p>
+                    So the single scaling law of 2020 has become at least three, each with its own cost structure:
+                </p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Axis</th><th>What you scale</th><th>Paid</th><th>Main limit</th></tr></thead>
+                        <tbody>
+                            <tr><td>Pre-training</td><td>Parameters and tokens</td><td>Once, up front</td><td>Human-written data</td></tr>
+                            <tr><td>Post-training (RL)</td><td>Reinforcement learning on verifiable tasks</td><td>Once, up front</td><td>Tasks with checkable answers</td></tr>
+                            <tr><td>Test-time</td><td>Reasoning tokens, samples, search</td><td>On every query</td><td>Latency and inference cost</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>
+                    The economics shifted again. Pre-training compute is a one-off cost amortised across every user. Test-time
+                    compute is billed per question, which is why the same model can now be cheap and fast or slow and expensive,
+                    depending on how hard you let it think. Thinking, it turns out, is billed by the token.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>09</span>Scaling what we actually care about</h2>
+                <p>
+                    Loss is a convenient thing to scale, but nobody buys a model for its perplexity. The more interesting recent
+                    question is whether <em>useful capability</em> also follows a trend. METR's attempt is my favourite: measure the
+                    length of tasks, in human working time, that a model can complete with 50% reliability. Across models since 2019,
+                    that horizon has been <strong>doubling roughly every seven months</strong>, possibly faster since 2024.<sup class="cite"><a href="#src-19">19</a></sup>
+                </p>
+                <p>
+                    It's a different kind of scaling law: it doesn't separate parameters, data and compute, it just tracks the
+                    frontier over calendar time. But it's the one that matters most for people like me working on security. When the
+                    length of tasks an agent can complete keeps doubling, so does the length of an attack chain it can run without a
+                    human in the loop, and the length of the defensive workflow we can hand to one.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>10</span>What actually held up</h2>
+                <p>
+                    Looking back over almost a decade, the specific numbers have aged badly. Kaplan's exponents were biased,
+                    Chinchilla's coefficients were disputed, the 20-tokens-per-parameter rule is ignored by nearly every production
+                    model, and pre-training is no longer the only curve worth climbing. What held up is the shape:
+                    <strong>performance improves predictably and with diminishing returns as you spend more compute</strong>, and
+                    the question is always where the next unit of compute buys the most.
+                </p>
+                <p>
+                    In 2020 the answer was parameters. In 2022 it was data. In 2024 it was smaller models trained for longer, and then
+                    reasoning at inference time. Each shift came from someone asking the same question with a different constraint in
+                    mind: a fixed training budget, an inference bill, a finite internet.
+                </p>
+            </section>
+
+            <p class="outro">
+                That's why I find scaling laws more interesting than any single model. They're not laws of nature; they're
+                accounting. They tell you what a capability will cost, and the field keeps finding new places to spend the money.
+                Whatever the next axis turns out to be, my bet is that someone will plot it on a log-log chart, find a straight line,
+                and start a very expensive training run.
+            </p>
+
+            <section class="sources">
+                <h2>Sources</h2>
+                <ol>
+                    <li id="src-1"><a href="https://arxiv.org/abs/1712.00409" target="_blank" rel="noopener">Deep Learning Scaling is Predictable, Empirically</a>, Hestness et al., Baidu Research, December 2017.</li>
+                    <li id="src-2"><a href="http://www.incompleteideas.net/IncIdeas/BitterLesson.html" target="_blank" rel="noopener">The Bitter Lesson</a>, Rich Sutton, March 2019.</li>
+                    <li id="src-3"><a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener">Scaling Laws for Neural Language Models</a>, Kaplan et al., OpenAI, January 2020.</li>
+                    <li id="src-4"><a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">Language Models are Few-Shot Learners</a>, Brown et al., OpenAI, May 2020. GPT-3.</li>
+                    <li id="src-5"><a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener">Training Compute-Optimal Large Language Models</a>, Hoffmann et al., DeepMind, March 2022. Chinchilla.</li>
+                    <li id="src-6"><a href="https://arxiv.org/abs/2406.12907" target="_blank" rel="noopener">Reconciling Kaplan and Chinchilla Scaling Laws</a>, Pearce &amp; Song, TMLR 2024.</li>
+                    <li id="src-7"><a href="https://arxiv.org/abs/2404.10102" target="_blank" rel="noopener">Chinchilla Scaling: A replication attempt</a>, Besiroglu et al., Epoch AI, April 2024.</li>
+                    <li id="src-8"><a href="https://arxiv.org/abs/2206.07682" target="_blank" rel="noopener">Emergent Abilities of Large Language Models</a>, Wei et al., TMLR 2022.</li>
+                    <li id="src-9"><a href="https://arxiv.org/abs/2304.15004" target="_blank" rel="noopener">Are Emergent Abilities of Large Language Models a Mirage?</a>, Schaeffer, Miranda &amp; Koyejo, April 2023.</li>
+                    <li id="src-10"><a href="https://arxiv.org/abs/2401.00448" target="_blank" rel="noopener">Beyond Chinchilla-Optimal: Accounting for Inference in Language Model Scaling Laws</a>, Sardana et al., ICML 2024.</li>
+                    <li id="src-11"><a href="https://ai.meta.com/blog/meta-llama-3/" target="_blank" rel="noopener">Introducing Meta Llama 3</a>, Meta AI, April 2024.</li>
+                    <li id="src-12"><a href="https://arxiv.org/abs/2211.04325" target="_blank" rel="noopener">Will we run out of data? Limits of LLM scaling based on human-generated data</a>, Villalobos et al., Epoch AI, 2022 (revised 2024).</li>
+                    <li id="src-13"><a href="https://epoch.ai/trends" target="_blank" rel="noopener">Machine Learning Trends</a>, Epoch AI. Training compute growth; see also <a href="https://epoch.ai/data-insights/training-compute-decomposition" target="_blank" rel="noopener">its decomposition</a>.</li>
+                    <li id="src-14"><a href="https://arxiv.org/abs/2305.16264" target="_blank" rel="noopener">Scaling Data-Constrained Language Models</a>, Muennighoff et al., NeurIPS 2023.</li>
+                    <li id="src-15"><a href="https://www.computing.co.uk/news/2024/ai/sutskever-warns-ai-will-become-less-predictable" target="_blank" rel="noopener">Genuinely intelligent AI will be unpredictable, warns former OpenAI chief scientist</a>, Computing, December 2024. Coverage of Ilya Sutskever's NeurIPS 2024 talk.</li>
+                    <li id="src-16"><a href="https://arxiv.org/abs/2408.03314" target="_blank" rel="noopener">Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters</a>, Snell et al., August 2024.</li>
+                    <li id="src-17"><a href="https://openai.com/index/learning-to-reason-with-llms/" target="_blank" rel="noopener">Learning to Reason with LLMs</a>, OpenAI, September 2024. o1.</li>
+                    <li id="src-18"><a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</a>, DeepSeek-AI, January 2025.</li>
+                    <li id="src-19"><a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener">Measuring AI Ability to Complete Long Software Tasks</a>, Kwa, West et al., METR, March 2025.</li>
+                </ol>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <span>© 2026 José Antonio Nicolás Navarro</span>
+            <a href="../index.html">← back to home</a>
+        </div>
+    </footer>
+
+</body>
+</html>
