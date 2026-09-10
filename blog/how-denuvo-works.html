@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A deep dive into how Denuvo Anti-Tamper works: hardware-bound tokens, stolen constants, a custom VM, integrity tripwires, performance and the economics of buying time.">
+    <meta property="og:title" content="Inside Denuvo: How the Most Hated DRM Actually Works">
+    <meta property="og:description" content="A deep dive into how Denuvo Anti-Tamper works.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://tohzzicklao.github.io/blog/how-denuvo-works.html">
+    <meta name="theme-color" content="#05080d">
+    <link rel="canonical" href="https://tohzzicklao.github.io/blog/how-denuvo-works.html">
+    <title>How Denuvo Works | José Antonio Nicolás</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2305080d'/%3E%3Cpath d='M50 14 82 26v24c0 19-13 31-32 37C31 81 18 69 18 50V26z' fill='none' stroke='%2300f0b5' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%237c5cff'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05080d;
+            --panel: rgba(12, 18, 28, 0.72);
+            --line: rgba(0, 240, 181, 0.12);
+            --line-strong: rgba(0, 240, 181, 0.35);
+            --text: #e6edf5;
+            --muted: #8794a6;
+            --dim: #566275;
+            --cyber: #00f0b5;
+            --neural: #7c5cff;
+            --alert: #ff4d6d;
+            --glow-c: rgba(0, 240, 181, 0.25);
+            --glow-n: rgba(124, 92, 255, 0.25);
+            --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+            --display: 'Space Grotesk', 'Inter', sans-serif;
+            --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::selection { background: var(--cyber); color: var(--bg); }
+        a { color: inherit; }
+        strong { color: #fff; font-weight: 600; }
+        code {
+            font-family: var(--mono);
+            font-size: 0.85em;
+            padding: 0.1rem 0.35rem;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.07);
+            word-break: break-word;
+        }
+
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(600px 400px at 15% 10%, var(--glow-n), transparent 70%),
+                radial-gradient(700px 500px at 90% 40%, rgba(0, 240, 181, 0.10), transparent 70%);
+        }
+        main, footer, .nav { position: relative; z-index: 1; }
+
+        /* ══════════ NAV ══════════ */
+        .nav {
+            position: sticky; top: 0;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+            background: rgba(5, 8, 13, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--line);
+        }
+        .brand {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .brand .p { color: var(--cyber); }
+        .brand .h { color: var(--neural); }
+        .back {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 0.4rem 0.7rem;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .back:hover { color: var(--cyber); background: rgba(255,255,255,0.04); }
+
+        /* ══════════ ARTICLE ══════════ */
+        .wrap { max-width: 780px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+        .post-head { padding: 4rem 0 2.5rem; }
+        .sec-label {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--cyber);
+            letter-spacing: 0.08em;
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.9rem;
+        }
+        .sec-label::after {
+            content: ''; width: 48px; height: 1px;
+            background: linear-gradient(90deg, var(--cyber), transparent);
+        }
+        h1 {
+            font-family: var(--display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        h1 .grad {
+            background: linear-gradient(100deg, var(--cyber) 0%, #5fd4ff 45%, var(--neural) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+        }
+        .meta { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); }
+        .lead { color: var(--muted); font-size: 1.08rem; margin-top: 1.5rem; }
+        .lead + .lead { margin-top: 1rem; }
+
+        .panel {
+            position: relative;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .block { padding: 1.6rem 1.7rem; margin-bottom: 1.3rem; }
+        .block h2 {
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.25rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .block h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .checks { list-style: none; display: grid; gap: 0.75rem; }
+        .checks li { position: relative; padding-left: 1.9rem; color: var(--muted); font-size: 0.95rem; }
+        .checks li::before {
+            content: '';
+            position: absolute; left: 0; top: 0.28rem;
+            width: 15px; height: 15px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 4px;
+        }
+        .checks li strong { display: block; margin-bottom: 0.1rem; }
+
+        .callout {
+            padding: 1.3rem 1.5rem;
+            margin: 0 0 1.3rem;
+            border-color: rgba(255, 77, 109, 0.35);
+            background: rgba(255, 77, 109, 0.05);
+            color: var(--muted);
+        }
+        .callout strong { color: var(--alert); }
+
+        .outro { color: var(--muted); margin: 2rem 0 0; }
+
+        .prose { margin: 2.5rem 0; }
+        .prose h2 {
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.4rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .prose h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .prose p { color: var(--muted); margin-bottom: 1rem; }
+        .prose em { color: var(--text); font-style: normal; }
+        .table-wrap { overflow-x: auto; margin: 0 0 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { text-align: left; vertical-align: top; padding: 0.75rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { font-family: var(--mono); font-size: 0.7rem; font-weight: 500; color: var(--cyber); text-transform: uppercase; letter-spacing: 0.06em; border-bottom-color: var(--line); }
+        td { color: var(--muted); min-width: 9rem; }
+        td:first-child { color: var(--text); white-space: nowrap; min-width: 0; }
+        tr:last-child td { border-bottom: none; }
+
+        .lead, .prose p, .outro { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+        .cite { font-family: var(--mono); font-size: 0.65em; line-height: 0; margin-left: 0.1em; }
+        .cite a { color: var(--cyber); text-decoration: none; }
+        .cite a:hover { text-decoration: underline; }
+        .sources li { scroll-margin-top: 90px; }
+        .sources li:target { color: var(--text); }
+        .sources { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+        .sources h2 { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; color: var(--cyber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.9rem; }
+        .sources ol { padding-left: 1.3rem; display: grid; gap: 0.5rem; }
+        .sources li { color: var(--dim); font-size: 0.82rem; }
+        .sources li::marker { font-family: var(--mono); color: var(--dim); }
+        .sources a { color: var(--muted); text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+        .sources a:hover { color: var(--cyber); }
+
+        /* diagrams */
+        .fig { margin: 1.6rem 0; }
+        .fig-scroll { overflow-x: auto; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        .fig svg { display: block; width: 100%; min-width: 520px; height: auto; }
+        .fig figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); margin-top: 0.6rem; text-align: center; }
+        .d-box { fill: rgba(255,255,255,0.025); stroke: var(--line-strong); stroke-width: 1.2; }
+        .d-box.hw { fill: rgba(124,92,255,0.07); stroke: rgba(124,92,255,0.5); }
+        .d-box.hot { fill: rgba(255,77,109,0.08); stroke: rgba(255,77,109,0.6); }
+        .d-box.solid { fill: #1a0d14; }
+        .d-zone { fill: none; stroke: var(--dim); stroke-width: 1.2; stroke-dasharray: 5 5; }
+        .d-h { font-family: var(--mono); font-size: 13px; fill: var(--cyber); letter-spacing: 0.05em; }
+        .d-t { font-family: var(--display); font-size: 15px; font-weight: 600; fill: var(--text); }
+        .d-s { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+        .d-r { font-family: var(--mono); font-size: 12px; fill: var(--neural); }
+        .d-r.alert, .d-m.alert { fill: var(--alert); }
+        .d-m { font-family: var(--mono); font-size: 12px; fill: var(--text); }
+        .d-m.ok { fill: var(--cyber); }
+        .d-l { font-family: var(--mono); font-size: 12px; fill: var(--muted); }
+        .d-life { stroke: var(--dim); stroke-width: 1; stroke-dasharray: 4 5; }
+        .d-arrow { stroke: var(--cyber); stroke-width: 1.5; }
+        .d-arrow.hot { stroke: var(--alert); }
+        .d-head { fill: var(--cyber); }
+        .d-head.hot { fill: var(--alert); }
+
+        /* ══════════ FOOTER ══════════ */
+        footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--line);
+            padding: 1.8rem 0;
+        }
+        footer .wrap {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+            font-family: var(--mono); font-size: 0.75rem; color: var(--dim);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyber); }
+
+        a:focus-visible {
+            outline: 2px solid var(--cyber);
+            outline-offset: 3px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 760px) {
+            .block { padding: 1.3rem 1.2rem; }
+        }
+        @media print {
+            .bg-glow, .nav { display: none !important; }
+            body { background: #fff; color: #111; }
+            strong, h1 .grad { color: #111; -webkit-text-fill-color: #111; }
+            .panel { background: none; border-color: #ccc; backdrop-filter: none; break-inside: avoid; }
+            .fig-scroll { background: #05080d; }
+            p, li, .meta { color: #333 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <nav class="nav">
+        <a href="../index.html" class="brand"><span class="p">jose@</span><span class="h">ai-sec</span>:~$</a>
+        <a href="index.html" class="back">cd ../blog</a>
+    </nav>
+
+    <main>
+        <article class="wrap">
+            <header class="post-head">
+                <div class="sec-label">BLOG // DEEP DIVE</div>
+                <h1>Inside Denuvo: <span class="grad">how the most hated DRM actually works</span></h1>
+                <div class="meta">September 10, 2026 · José Antonio Nicolás Navarro</div>
+                <p class="lead">
+                    Ask a PC gamer what Denuvo does and you'll usually get one of two answers: "it kills performance" or
+                    "it gets cracked anyway". Ask them how it works and you'll mostly get silence. That's not their fault.
+                    Irdeto has never published the internals, and the people who know them best have every reason to stay quiet.
+                </p>
+                <p class="lead">
+                    Still, over the years a handful of reverse engineers have written up what they found, carefully and without
+                    handing out tools. Put together, those write-ups describe something more interesting than "DRM":
+                    <strong>a system that turns your hardware into part of the program</strong>.
+                </p>
+            </header>
+
+            <div class="panel callout">
+                <strong>Before anyone gets ideas:</strong> this is an educational analysis. Everything in it comes from information
+                already publicly available on the internet (researchers' write-ups, press coverage and an academic paper), all linked
+                in the sources at the bottom. I haven't reverse engineered Denuvo myself, and this post isn't affiliated with or
+                endorsed by Irdeto or Denuvo. No tools, no download links, no step-by-step anything. I'm interested in the software
+                protection engineering, not in your Steam library. Buy the games.
+            </div>
+
+            <section class="prose">
+                <h2><span>01</span>Anti-tamper, not DRM</h2>
+                <p>
+                    First, a distinction that matters. Denuvo Anti-Tamper doesn't decide whether you own a game. Steam (or another
+                    store) does that. Denuvo's job is to make it very expensive to rip out or fake the code that asks that question.
+                    It's the armour around the lock, not the lock.
+                </p>
+                <p>
+                    The company has a fittingly DRM-flavoured family tree. According to its Wikipedia entry, Denuvo Software Solutions was formed in Salzburg through a
+                    management buyout of DigitalWorks, the Sony DADC unit that built SecuROM, the copy protection many of us remember
+                    from the 2000s with mixed feelings. Its first game was <strong>FIFA 15</strong>, in September 2014.<sup class="cite"><a href="#src-1">1</a></sup>
+                    In January 2018 Irdeto, a digital security company better known for protecting pay-TV, bought it along with its
+                    45 employees.<sup class="cite"><a href="#src-1">1</a>,<a href="#src-4">4</a></sup>
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>02</span>The license: a token cut to your machine</h2>
+                <p>
+                    According to Maurice Heumann, who reverse engineered the Denuvo build in Hogwarts Legacy, the flow looks like
+                    this. The first time you launch a protected game, it collects a set of
+                    hardware and software properties into a <strong>fingerprint</strong> and asks Steam for a ticket proving you own
+                    the game. Both go to Denuvo's servers, which check the ticket and send back a <strong>token</strong> that only
+                    works on a machine with that exact fingerprint.<sup class="cite"><a href="#src-3">3</a></sup>
+                    The token is cached, so you don't need to be online every time you play; Connor-Jay Dunn calls it a
+                    "semi-online DRM", which is about right.<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 316" role="img" aria-label="Activation sequence: the game sends a fingerprint and a Steam ticket to Denuvo's server, the server checks ownership with Steam, and returns a token bound to that fingerprint, which the game caches."><defs><marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="12" width="160" height="36" rx="8"/><text class="d-t" x="100" y="35" text-anchor="middle">Game (Denuvo)</text><line class="d-life" x1="100" y1="48" x2="100" y2="260"/><rect class="d-box hw" x="220" y="12" width="160" height="36" rx="8"/><text class="d-t" x="300" y="35" text-anchor="middle">Denuvo server</text><line class="d-life" x1="300" y1="48" x2="300" y2="260"/><rect class="d-box hw" x="420" y="12" width="160" height="36" rx="8"/><text class="d-t" x="500" y="35" text-anchor="middle">Steam</text><line class="d-life" x1="500" y1="48" x2="500" y2="260"/><line class="d-arrow" x1="100" y1="92" x2="296" y2="92" marker-end="url(#arr1)"/><text class="d-l" x="200" y="84" text-anchor="middle">1 · fingerprint + ticket</text><line class="d-arrow" x1="300" y1="138" x2="496" y2="138" marker-end="url(#arr1)"/><text class="d-l" x="400" y="130" text-anchor="middle">2 · valid ticket?</text><line class="d-arrow" x1="500" y1="184" x2="304" y2="184" marker-end="url(#arr1)"/><text class="d-l" x="400" y="176" text-anchor="middle">3 · yes, owns it</text><line class="d-arrow hot" x1="300" y1="230" x2="104" y2="230" marker-end="url(#arr1h)"/><text class="d-l" x="200" y="222" text-anchor="middle">4 · token for this PC</text><text class="d-m ok" x="24" y="288">✓ token cached, game runs offline</text><text class="d-s" x="24" y="306">new fingerprint → new activation</text></svg></div>
+                    <figcaption>Fig. 1 · Activation, as reconstructed from outside. Step 2 is an educated guess, not documented.</figcaption>
+                </figure>
+                <p>
+                    The fingerprint is also why Denuvo has activation limits. According to Wikipedia, each license allows five devices in a 24-hour window, and
+                    swapping a CPU or motherboard, or even a big OS or BIOS update, can make your PC look like a new device and burn
+                    another slot.<sup class="cite"><a href="#src-1">1</a></sup> Annoying, but it follows directly from the design:
+                    the token isn't "for you", it's for a very specific description of your computer.
+                </p>
+                <p>
+                    So far this sounds like ordinary licensing. The clever part is what the token actually <em>contains</em>.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>03</span>Stolen constants: your PC is the decryption key</h2>
+                <p>
+                    A naive DRM would check the token once and branch: valid, play; invalid, quit. That's one <code>if</code>, and
+                    crackers have been flipping single <code>if</code>s since the 1980s. Denuvo doesn't really have that branch.
+                    According to Dunn's analysis, it removes pieces of the game's own code and makes the token the only way to get
+                    them back.<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <p>
+                    Take an instruction like <code>mov dword ptr [rbp-4], edi</code>. The <code>-4</code> never changes after
+                    compilation, so it can be cut out of the binary entirely. The function is moved into Denuvo's virtual machine, and
+                    the missing value is stored server-side, <strong>mixed with your hardware identifiers</strong> through reversible
+                    math. That mixture is what ends up in your license. At runtime, the VM reads your hardware again, undoes the math
+                    and recovers <code>-4</code>, then executes the original instruction.<sup class="cite"><a href="#src-2">2</a></sup>
+                    Heumann, from the other side, saw the same thing: the token is used "to e.g. decrypt certain values at runtime".<sup class="cite"><a href="#src-3">3</a></sup>
+                    Dunn adds that after the first activation the license is kept as a local file, and that before handing control
+                    to the game's original entry point (OEP), Denuvo writes parts of it into DWORDs scattered around the
+                    <code>.vm</code> section, where the VM code lives.<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 240" role="img" aria-label="Stolen constants: a constant is removed from the binary at protection time, mixed with the fingerprint into the license on the server, and recovered at runtime from the license and the current hardware; the same PC gets the right value, a different PC gets garbage and crashes."><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="16" width="260" height="78" rx="8"/><text class="d-h" x="34" y="38">1 · PROTECTION TIME</text><text class="d-m" x="34" y="62">mov [rbp-4], edi</text><text class="d-s" x="34" y="82">the -4 is cut out of the binary</text><rect class="d-box hw" x="320" y="16" width="260" height="78" rx="8"/><text class="d-h" x="334" y="38">2 · ACTIVATION</text><text class="d-m" x="334" y="62">lic = f(-4, fingerprint)</text><text class="d-s" x="334" y="82">shipped inside your token</text><line class="d-arrow" x1="280" y1="55" x2="316" y2="55" marker-end="url(#arr2)"/><rect class="d-box" x="20" y="146" width="260" height="78" rx="8"/><text class="d-h" x="34" y="168">3 · RUNTIME, IN THE VM</text><text class="d-m" x="34" y="192">f⁻¹(lic, hw_now) = ?</text><text class="d-s" x="34" y="212">hardware is read again</text><line class="d-arrow" x1="380" y1="94" x2="234" y2="142" marker-end="url(#arr2)"/><rect class="d-box" x="320" y="146" width="260" height="34" rx="8"/><text class="d-m ok" x="334" y="168">same PC  → -4, game runs</text><rect class="d-box hot" x="320" y="190" width="260" height="34" rx="8"/><text class="d-m alert" x="334" y="212">other PC → junk, crash</text><line class="d-arrow" x1="280" y1="163" x2="316" y2="163" marker-end="url(#arr2)"/><line class="d-arrow hot" x1="280" y1="207" x2="316" y2="207" marker-end="url(#arr2h)"/></svg></div>
+                    <figcaption>Fig. 2 · There is no "is the license valid?" check to patch. A wrong machine just computes wrong numbers.</figcaption>
+                </figure>
+                <p>
+                    This is the core idea, and it's a good one. On the wrong machine nothing says "invalid license": you just get a
+                    wrong constant, and the game usually crashes somewhere far away from where the problem started. Dunn also describes
+                    so-called <strong>pre-OEP checks</strong>: before the game reaches its original entry point, they decrypt some constants and compare
+                    them to expected values; on a mismatch, Denuvo deletes the local license and asks for a new one.<sup class="cite"><a href="#src-2">2</a></sup>
+                    That's the mechanism behind the "new hardware, new activation" experience from the previous section.
+                </p>
+                <p>
+                    As Dunn points out, it also means a cracker can't just generate a fake token. They either recover every stolen constant and put it back
+                    in the binary, or they make every machine look like the one the token was issued for. Remember that second option.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>04</span>What goes into the fingerprint</h2>
+                <p>
+                    Dunn's write-up lists the sources a recent Denuvo build reads.<sup class="cite"><a href="#src-2">2</a></sup> Broadly,
+                    they fall into a few groups: what the CPU reports about itself, information requested directly from the Windows
+                    kernel, data Windows shares with every process, details that pin down your exact Windows build, and a few
+                    ordinary system properties. Notice how many of them deliberately avoid the normal Windows API, which is the
+                    easiest layer to hook.
+                </p>
+                <p>
+                    Finding all of them is the hard part of any attack. Heumann, who spent his free time on Hogwarts Legacy's
+                    Denuvo in 2023–2024, ran the game inside the Qiling emulation framework, spoofed one feature at a time and watched
+                    whether a valid token got rejected. Finding most features took about two months. Finding the last one took three
+                    more, and he only found it by accident.<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>05</span>The VM, and why reading it hurts</h2>
+                <p>
+                    In Dunn's description, the functions holding stolen constants don't run as normal x86. They're translated into bytecode for a custom
+                    virtual CPU, and a small interpreter embedded in the game executes it. Code virtualization isn't new (VMProtect
+                    and Themida do it too), but Denuvo's VM has some nasty personal touches.<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <p>
+                    According to his analysis, dispatch goes through a handler table: each handler computes the address of the next one and jumps there by
+                    pushing it onto the stack and executing <code>ret</code>, which makes control flow miserable to follow statically.
+                    Bytecode words are stored encrypted and decrypted on the fly. And instead of keeping values in tidy virtual
+                    registers, Denuvo can <strong>spread a single value across stack slots, bit by bit</strong>. Dunn calls that one his
+                    favourite feature, which tells you something about reverse engineers.<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <p>
+                    On top of that, Dunn found instructions rewritten as <strong>Mixed Boolean-Arithmetic</strong> (MBA) expressions:
+                    formulas that mix <code>+</code>, <code>-</code>, <code>*</code> with <code>&amp;</code>, <code>|</code>, <code>^</code>
+                    so that something trivial becomes unreadable but stays mathematically identical. A textbook identity:
+                    <code>x + y</code> equals <code>(x ^ y) + 2·(x &amp; y)</code>. Now chain dozens of those, and a plain
+                    <code>mov rax, rbx</code> turns into a page of boolean soup. Dunn used the Z3 theorem prover to confirm that the
+                    rewritten expressions really are equivalent to the originals.<sup class="cite"><a href="#src-2">2</a></sup>
+                    Amusingly, Denuvo's own researchers also publish on the other side of the problem: SiMBA, a fast algorithm to
+                    <em>simplify</em> linear MBA expressions, came out of Denuvo GmbH in 2022.<sup class="cite"><a href="#src-9">9</a></sup>
+                    If you build the maze, you'd better know how to solve it.
+                </p>
+                <p>
+                    Two more details from Dunn's write-up that I really like. First, Denuvo needs randomness but doesn't trust <code>RDRAND</code> or OS APIs,
+                    which are easy to fake. It uses values already sitting in native registers instead, which are basically guaranteed
+                    to change (in a game they can depend on anything, down to your character losing health), and does modular arithmetic on them to pick between <strong>nine semantically identical CPUID handlers</strong>.
+                    Patch one and the next run may take another. Second, the <code>CPUID</code> instruction itself is kept encrypted:
+                    the VM decrypts it, runs it and re-encrypts it, behind a spinlock that is, of course, also encrypted.<sup class="cite"><a href="#src-2">2</a></sup>
+                    Tracing the decryption of a single constant took Dunn's tooling over ten million x86 instructions.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>06</span>The tripwires</h2>
+                <p>
+                    Obfuscation slows you down. Integrity checks punish you for touching anything. Denuvo's are designed so that the
+                    usual reverse engineering toolbox breaks itself:
+                </p>
+                <p>
+                    Dunn describes <strong>CRC checks</strong> that scan critical VM handlers, like the ones that execute <code>CPUID</code> and
+                    <code>SYSCALL</code>, for modifications. Constants are also derived from <strong>arbitrary byte ranges of the
+                    protected section</strong>, so a software breakpoint or an inline hook silently changes the result of some
+                    unrelated calculation later.<sup class="cite"><a href="#src-2">2</a></sup> You don't get an error. You get a crash
+                    ten minutes into the game, in a different function, which is much worse.
+                </p>
+                <p>
+                    Then there's the stack. Dunn and Heumann both found that Denuvo stores important data above and below the stack pointer, in space that normal
+                    code would consider free. When an exception fires, for a hardware breakpoint for example, Windows writes an
+                    <code>EXCEPTION_RECORD</code> right there and overwrites it.<sup class="cite"><a href="#src-2">2</a>,<a href="#src-3">3</a></sup>
+                    Heumann put it plainly: this "makes hardware breakpoints and many other techniques either extremely difficult to
+                    use, or even impossible". He ended up writing his own small debugger that swallows those exceptions before they
+                    reach the game, and using a hypervisor for EPT hooks where patching was too tedious. Total count: around
+                    <strong>2,000 hooks and patches</strong>, just to get the game to the start screen on a second machine.<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+                <p>
+                    And it isn't a one-time check at launch: according to Heumann, the fingerprint is re-verified while you play.<sup class="cite"><a href="#src-3">3</a></sup>
+                    Which brings us to the question everybody actually cares about.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>07</span>So does it kill performance?</h2>
+                <p>
+                    The honest answer is: <strong>it depends on where the checks are placed</strong>, and that's decided during
+                    integration, game by game.
+                </p>
+                <p>
+                    Heumann instrumented Hogwarts Legacy and logged every time execution entered Denuvo. The log fired about once every
+                    few seconds, sometimes not at all, and bunched up during loading screens and scene changes. "I don't see any spamming
+                    happening, unlike in other DRMs who interact in every frame." He couldn't measure a relevant overhead and concluded
+                    that Denuvo "does not deserve all the hate it gets".<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+                <p>
+                    Now the counterexamples. In April 2018, Tekken 7 director Katsuhiro Harada confirmed that frame rate drops when
+                    certain moves hit, like Akuma's Shakunetsu Hadouken, came from the "anti-tamper 3rd party middleware", and that
+                    changing PC settings wouldn't help.<sup class="cite"><a href="#src-6">6</a></sup> A check sitting on a hit effect is
+                    a check sitting in a hot path. According to EventHubs, Bandai Namco eventually removed Denuvo from the game in October
+                    2021.<sup class="cite"><a href="#src-10">10</a></sup>
+                </p>
+                <p>
+                    In 2021, Digital Foundry found that the cracked version of Resident Evil Village didn't stutter where the retail one
+                    did. There, Denuvo was layered on top of Capcom's own anti-tamper, and Denuvo said it couldn't comment on Capcom's
+                    implementation; Capcom's patch brought the retail game roughly to the cracked version's level.<sup class="cite"><a href="#src-1">1</a>,<a href="#src-7">7</a></sup>
+                </p>
+                <p>
+                    So both camps are partly right. The protection itself isn't inherently slow. But it hands developers a powerful
+                    tool for putting expensive, obfuscated code anywhere they like, and some of them put it in the wrong place.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>08</span>Twelve years of cat and mouse</h2>
+                <p>
+                    In the early years Denuvo looked close to unbeatable. As Wikipedia and TorrentFreak recount, Chinese group 3DM needed about a month for Dragon Age:
+                    Inquisition, and in January 2016 its founder, Bird Sister, wrote after struggling with Just Cause 3 that "in two
+                    years time I'm afraid there will be no free games to play in the world".<sup class="cite"><a href="#src-1">1</a>,<a href="#src-5">5</a></sup>
+                    3DM then stopped cracking games for a year.
+                </p>
+                <p>
+                    The prediction aged badly. According to Wikipedia's timeline, by October 2017, games like Middle-earth: Shadow of War and FIFA 18 were cracked within
+                    hours of release, and in December 2018 Hitman 2 was cracked three days <em>before</em> its release.<sup class="cite"><a href="#src-1">1</a></sup>
+                    After that, according to the same timeline, launch-day cracks disappeared for years: the next one only came in May
+                    2026, when voices38 cracked LEGO Batman: Legacy of the Dark Knight on release. Also in 2026 the approach changed
+                    again, with hypervisor-based bypasses that don't touch the game at all: they sit below Windows and make every
+                    machine answer the fingerprint questions the way the token expects.<sup class="cite"><a href="#src-1">1</a></sup>
+                    That's exactly the "second option" from section 03, and it deserves its own post.
+                </p>
+                <p>
+                    Dunn's write-up also sketches how the technical attacks evolved. In the early days, crackers went after the
+                    hardware checks one by one. Denuvo answered with countermeasures like the stack trick from section 06, which
+                    make that kind of patching break the game. Dunn knew of only one Denuvo binary that had ever been completely
+                    restored. And in January 2025 he suggested that a hypervisor could spoof all the hardware information, warning
+                    that doing it without side effects would be the hard part.<sup class="cite"><a href="#src-2">2</a></sup> About a year later,
+                    that's roughly what happened.
+                </p>
+                <p>
+                    Throughout, Denuvo never really sold "uncrackable". It sold <strong>time</strong>.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>09</span>The economics of buying time</h2>
+                <p>
+                    How much is that time worth? The best public attempt to answer it is a study by William Volckmann, which looked at
+                    86 Denuvo-protected Steam games released between 2014 and 2022. Since sales figures are mostly private, it used new
+                    Steam reviews and player counts as a proxy. A crack in the first week was associated with roughly
+                    <strong>20% less revenue</strong> than if the protection had held. After about twelve weeks, the effect was close to
+                    zero.<sup class="cite"><a href="#src-8">8</a></sup>
+                </p>
+                <p>
+                    That matches what publishers do in practice. Plenty of games drop Denuvo months or years after launch, like Tekken 7
+                    above,<sup class="cite"><a href="#src-10">10</a></sup> once
+                    the sales window it protects has closed. Sometimes much sooner: Rage 2 shipped with Denuvo on Steam but without it on
+                    Bethesda's own launcher, that version was cracked immediately, and Denuvo was removed from the Steam release two days
+                    later.<sup class="cite"><a href="#src-1">1</a></sup> Paying to protect a door when the window next to it is open is a
+                    hard sell.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>10</span>What defenders can take from it</h2>
+                <p>
+                    Whatever you think of DRM, Denuvo is a well-engineered piece of client-side protection, and its design choices
+                    generalise. <strong>Don't write checks, write dependencies.</strong> A boolean can be flipped; a constant that only
+                    exists once the environment is right can't. <strong>Make failure quiet and far away.</strong> A crash ten functions
+                    later costs an attacker far more than an error dialog. <strong>Make the toolbox break itself</strong>: if breakpoints
+                    and hooks corrupt state, every observation has a price.
+                </p>
+                <p>
+                    But the same design also shows the ceiling of the approach. Everything ultimately hinges on the program's ability
+                    to observe its environment honestly: what <code>CPUID</code> says, what the kernel returns, what sits in a shared
+                    memory page. On hardware the attacker controls, that's an assumption, not a guarantee. Denuvo made the binary
+                    extremely hard to change. It couldn't make the machine tell the truth.
+                </p>
+            </section>
+
+            <p class="outro">
+                What I respect about Denuvo, as an engineer, is that it never pretended to solve an unsolvable problem. It took a
+                fight it was always going to lose eventually and made it slow, expensive and painful enough to matter commercially.
+                That's not nothing. In security, buying time on purpose is a legitimate strategy, as long as you know that's what
+                you're buying.
+            </p>
+
+            <section class="sources">
+                <h2>Sources</h2>
+                <ol>
+                    <li id="src-1"><a href="https://en.wikipedia.org/wiki/Denuvo" target="_blank" rel="noopener">Denuvo</a>, Wikipedia. Origins, activation limits, cracking timeline, performance controversies, removals after launch.</li>
+                    <li id="src-2"><a href="https://connorjaydunn.github.io/blog/posts/denuvo-analysis/" target="_blank" rel="noopener">Denuvo Analysis</a>, Connor-Jay Dunn, January 2025. Stolen constants, pre-OEP checks, VM design, MBA, fingerprint sources, integrity checks.</li>
+                    <li id="src-3"><a href="https://momo5502.com/posts/2024-03-31-bypassing-denuvo-in-hogwarts-legacy/" target="_blank" rel="noopener">Bypassing Denuvo in Hogwarts Legacy</a>, Maurice Heumann, March 2024. Token flow, runtime checks, stack tricks, tooling, performance observations.</li>
+                    <li id="src-4"><a href="https://techcrunch.com/2018/01/23/anti-piracy-firm-denuvo-acquired-by-digital-security-outfit-irdeto/" target="_blank" rel="noopener">Anti-piracy firm Denuvo acquired by digital security outfit Irdeto</a>, TechCrunch, January 2018.</li>
+                    <li id="src-5"><a href="https://torrentfreak.com/no-more-pirate-games-in-two-years-group-warns-160106/" target="_blank" rel="noopener">No More Pirated Games in Two Years, Cracking Group Warns</a>, TorrentFreak, January 2016. Bird Sister's post on Just Cause 3.</li>
+                    <li id="src-6"><a href="https://wccftech.com/tekken-7-denuvo-drm-performance-issues/" target="_blank" rel="noopener">Tekken 7 Director Says Denuvo DRM Is Causing Performance Issues In The Game</a>, Wccftech, April 2018. Katsuhiro Harada's statements.</li>
+                    <li id="src-7"><a href="https://www.pcgamer.com/resident-evil-village-drm-denuvo-stuttering/" target="_blank" rel="noopener">The cracked version of Resident Evil Village runs better, testing confirms</a>, PC Gamer, May 2021. Digital Foundry's comparison.</li>
+                    <li id="src-8"><a href="https://www.notebookcheck.net/Decoding-Denuvo-s-impact-How-DRM-shields-early-game-revenue-by-up-to-20-percent.901313.0.html" target="_blank" rel="noopener">Decoding Denuvo's impact: How DRM shields early game revenue by up to 20 percent</a>, Notebookcheck. Coverage of Volckmann's study in <em>Entertainment Computing</em>.</li>
+                    <li id="src-9"><a href="https://arxiv.org/abs/2209.06335" target="_blank" rel="noopener">Efficient Deobfuscation of Linear Mixed Boolean-Arithmetic Expressions</a>, Reichenwallner &amp; Meerwald-Stadler, CheckMATE 2022. Code published by Denuvo GmbH as <a href="https://github.com/DenuvoSoftwareSolutions/SiMBA" target="_blank" rel="noopener">SiMBA</a>.</li>
+                    <li id="src-10"><a href="https://eventhubs.com/news/2021/oct/29/tekken-denuvo-remove/" target="_blank" rel="noopener">Tekken 7's removal of Denuvo Anti-tamper likely means the game is done seeing new content</a>, EventHubs, October 2021.</li>
+                </ol>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <span>© 2026 José Antonio Nicolás Navarro</span>
+            <a href="../index.html">← back to home</a>
+        </div>
+    </footer>
+
+</body>
+</html>
