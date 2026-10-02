@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="An educational look at the hypervisor-based Denuvo bypass: how it works conceptually, what it costs users, and what it teaches about trusting the client.">
+    <meta property="og:title" content="Lying from Ring -1: the Denuvo Hypervisor Bypass">
+    <meta property="og:description" content="An educational look at the hypervisor-based Denuvo bypass.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://tohzzicklao.github.io/blog/denuvo-hypervisor-bypass.html">
+    <meta name="theme-color" content="#05080d">
+    <link rel="canonical" href="https://tohzzicklao.github.io/blog/denuvo-hypervisor-bypass.html">
+    <title>The Denuvo Hypervisor Bypass | José Antonio Nicolás</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2305080d'/%3E%3Cpath d='M50 14 82 26v24c0 19-13 31-32 37C31 81 18 69 18 50V26z' fill='none' stroke='%2300f0b5' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%237c5cff'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05080d;
+            --panel: rgba(12, 18, 28, 0.72);
+            --line: rgba(0, 240, 181, 0.12);
+            --line-strong: rgba(0, 240, 181, 0.35);
+            --text: #e6edf5;
+            --muted: #8794a6;
+            --dim: #566275;
+            --cyber: #00f0b5;
+            --neural: #7c5cff;
+            --alert: #ff4d6d;
+            --glow-c: rgba(0, 240, 181, 0.25);
+            --glow-n: rgba(124, 92, 255, 0.25);
+            --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+            --display: 'Space Grotesk', 'Inter', sans-serif;
+            --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::selection { background: var(--cyber); color: var(--bg); }
+        a { color: inherit; }
+        strong { color: #fff; font-weight: 600; }
+        code {
+            font-family: var(--mono);
+            font-size: 0.85em;
+            padding: 0.1rem 0.35rem;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.07);
+            word-break: break-word;
+        }
+
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(600px 400px at 15% 10%, var(--glow-n), transparent 70%),
+                radial-gradient(700px 500px at 90% 40%, rgba(0, 240, 181, 0.10), transparent 70%);
+        }
+        main, footer, .nav { position: relative; z-index: 1; }
+
+        /* ══════════ NAV ══════════ */
+        .nav {
+            position: sticky; top: 0;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+            background: rgba(5, 8, 13, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--line);
+        }
+        .brand {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .brand .p { color: var(--cyber); }
+        .brand .h { color: var(--neural); }
+        .back {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 0.4rem 0.7rem;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .back:hover { color: var(--cyber); background: rgba(255,255,255,0.04); }
+
+        /* ══════════ ARTICLE ══════════ */
+        .wrap { max-width: 780px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+        .post-head { padding: 4rem 0 2.5rem; }
+        .sec-label {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--cyber);
+            letter-spacing: 0.08em;
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.9rem;
+        }
+        .sec-label::after {
+            content: ''; width: 48px; height: 1px;
+            background: linear-gradient(90deg, var(--cyber), transparent);
+        }
+        h1 {
+            font-family: var(--display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        h1 .grad {
+            background: linear-gradient(100deg, var(--cyber) 0%, #5fd4ff 45%, var(--neural) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+        }
+        .meta { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); }
+        .lead { color: var(--muted); font-size: 1.08rem; margin-top: 1.5rem; }
+        .lead + .lead { margin-top: 1rem; }
+
+        .panel {
+            position: relative;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .block { padding: 1.6rem 1.7rem; margin-bottom: 1.3rem; }
+        .block h2 {
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.25rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .block h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .checks { list-style: none; display: grid; gap: 0.75rem; }
+        .checks li { position: relative; padding-left: 1.9rem; color: var(--muted); font-size: 0.95rem; }
+        .checks li::before {
+            content: '';
+            position: absolute; left: 0; top: 0.28rem;
+            width: 15px; height: 15px;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 4px;
+        }
+        .checks li strong { display: block; margin-bottom: 0.1rem; }
+
+        .callout {
+            padding: 1.3rem 1.5rem;
+            margin: 0 0 1.3rem;
+            border-color: rgba(255, 77, 109, 0.35);
+            background: rgba(255, 77, 109, 0.05);
+            color: var(--muted);
+        }
+        .callout strong { color: var(--alert); }
+
+        .outro { color: var(--muted); margin: 2rem 0 0; }
+
+        .prose { margin: 2.5rem 0; }
+        .prose h2 {
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.4rem; font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .prose h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .prose p { color: var(--muted); margin-bottom: 1rem; }
+        .prose em { color: var(--text); font-style: normal; }
+        .table-wrap { overflow-x: auto; margin: 0 0 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+        th, td { text-align: left; vertical-align: top; padding: 0.75rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { font-family: var(--mono); font-size: 0.7rem; font-weight: 500; color: var(--cyber); text-transform: uppercase; letter-spacing: 0.06em; border-bottom-color: var(--line); }
+        td { color: var(--muted); min-width: 9rem; }
+        td:first-child { color: var(--text); white-space: nowrap; min-width: 0; }
+        tr:last-child td { border-bottom: none; }
+
+        .lead, .prose p, .outro { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+        .cite { font-family: var(--mono); font-size: 0.65em; line-height: 0; margin-left: 0.1em; }
+        .cite a { color: var(--cyber); text-decoration: none; }
+        .cite a:hover { text-decoration: underline; }
+        .sources li { scroll-margin-top: 90px; }
+        .sources li:target { color: var(--text); }
+        .sources { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+        .sources h2 { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; color: var(--cyber); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.9rem; }
+        .sources ol { padding-left: 1.3rem; display: grid; gap: 0.5rem; }
+        .sources li { color: var(--dim); font-size: 0.82rem; }
+        .sources li::marker { font-family: var(--mono); color: var(--dim); }
+        .sources a { color: var(--muted); text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+        .sources a:hover { color: var(--cyber); }
+
+        /* diagrams */
+        .fig { margin: 1.6rem 0; }
+        .fig-scroll { overflow-x: auto; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+        .fig svg { display: block; width: 100%; min-width: 520px; height: auto; }
+        .fig figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); margin-top: 0.6rem; text-align: center; }
+        .d-box { fill: rgba(255,255,255,0.025); stroke: var(--line-strong); stroke-width: 1.2; }
+        .d-box.hw { fill: rgba(124,92,255,0.07); stroke: rgba(124,92,255,0.5); }
+        .d-box.hot { fill: rgba(255,77,109,0.08); stroke: rgba(255,77,109,0.6); }
+        .d-box.solid { fill: #1a0d14; }
+        .d-zone { fill: none; stroke: var(--dim); stroke-width: 1.2; stroke-dasharray: 5 5; }
+        .d-h { font-family: var(--mono); font-size: 13px; fill: var(--cyber); letter-spacing: 0.05em; }
+        .d-t { font-family: var(--display); font-size: 15px; font-weight: 600; fill: var(--text); }
+        .d-s { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+        .d-r { font-family: var(--mono); font-size: 12px; fill: var(--neural); }
+        .d-r.alert, .d-m.alert { fill: var(--alert); }
+        .d-m { font-family: var(--mono); font-size: 12px; fill: var(--text); }
+        .d-m.ok { fill: var(--cyber); }
+        .d-l { font-family: var(--mono); font-size: 12px; fill: var(--muted); }
+        .d-life { stroke: var(--dim); stroke-width: 1; stroke-dasharray: 4 5; }
+        .d-arrow { stroke: var(--cyber); stroke-width: 1.5; }
+        .d-arrow.hot { stroke: var(--alert); }
+        .d-head { fill: var(--cyber); }
+        .d-head.hot { fill: var(--alert); }
+
+        /* ══════════ FOOTER ══════════ */
+        footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--line);
+            padding: 1.8rem 0;
+        }
+        footer .wrap {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+            font-family: var(--mono); font-size: 0.75rem; color: var(--dim);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyber); }
+
+        a:focus-visible {
+            outline: 2px solid var(--cyber);
+            outline-offset: 3px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 760px) {
+            .block { padding: 1.3rem 1.2rem; }
+        }
+        @media print {
+            .bg-glow, .nav { display: none !important; }
+            body { background: #fff; color: #111; }
+            strong, h1 .grad { color: #111; -webkit-text-fill-color: #111; }
+            .panel { background: none; border-color: #ccc; backdrop-filter: none; break-inside: avoid; }
+            .fig-scroll { background: #05080d; }
+            p, li, .meta { color: #333 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <nav class="nav">
+        <a href="../index.html" class="brand"><span class="p">jose@</span><span class="h">ai-sec</span>:~$</a>
+        <a href="index.html" class="back">cd ../blog</a>
+    </nav>
+
+    <main>
+        <article class="wrap">
+            <header class="post-head">
+                <div class="sec-label">BLOG // DEEP DIVE</div>
+                <h1>Lying from Ring -1: <span class="grad">the Denuvo Hypervisor Bypass</span></h1>
+                <div class="meta">October 2, 2026 · José Antonio Nicolás Navarro</div>
+                <p class="lead">
+                    For about a decade, Denuvo ran on a simple and honestly rather elegant business model: make cracking
+                    a game so tedious that, by the time someone finished, everyone who wanted it had already bought it.
+                    Crackers spent months untangling obfuscated code. Publishers enjoyed their launch window in peace.
+                    Everybody knew their role.
+                </p>
+                <p class="lead">
+                    Then, in 2026, someone stopped asking "how do I break Denuvo?" and started asking a much ruder question:
+                    <strong>what if I just lie to it?</strong> From underneath Windows, where it can't check.
+                </p>
+            </header>
+
+            <div class="panel callout">
+                <strong>Before anyone gets ideas:</strong> this is an educational analysis. Everything in it comes from information
+                already publicly available on the internet (press coverage, public analyses and academic papers), all linked in the
+                sources at the bottom. I haven't used or analysed the bypass myself, and this post isn't affiliated with or endorsed
+                by Irdeto or Denuvo. No tools, no download links, no instructions. I'm interested in the security engineering, not in
+                your Steam library. Buy the games.
+            </div>
+
+            <section class="prose">
+                <h2><span>01</span>Denuvo in thirty seconds</h2>
+                <p>
+                    Denuvo Anti-Tamper, owned by Irdeto, is not the kind of DRM that checks your license once and goes back to
+                    sleep. It gets woven into the game binary itself: chunks of code are transformed and virtualized, and
+                    integrity checks, the so-called triggers, are sprinkled through the game and fire while you play.
+                </p>
+                <p>
+                    On the license side, according to Wikipedia, each copy is activated online and receives a token bound to a
+                    <strong>fingerprint of your machine</strong>, built from hardware and system properties. If the fingerprint
+                    doesn't match, the game doesn't run. That's why swapping your CPU or updating your BIOS can make Denuvo
+                    decide you're a stranger.<sup class="cite"><a href="#src-1">1</a></sup> From its point of view, you kind of are.
+                </p>
+                <p>
+                    Classic cracking meant reverse engineering all of that by hand, game by game, trigger by trigger.
+                    Weeks to months of work. And that was the product. Denuvo never really promised "uncrackable". It promised
+                    <strong>"not this month"</strong>, and priced itself accordingly.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>02</span>A hypervisor, briefly</h2>
+                <p>
+                    Modern CPUs come with hardware virtualization (Intel VT-x, AMD-V), which lets a hypervisor run whole
+                    operating systems as guests. It sits at what people call <strong>Ring -1</strong>: below the Windows kernel
+                    (Ring 0), which in turn sits below your applications (Ring 3). If the kernel is the landlord, the hypervisor
+                    owns the building. The landlord believes he's in charge. He is mistaken.
+                </p>
+                <p>
+                    The relevant trick is that a hypervisor can tell the CPU: "whenever the guest runs <em>this</em>
+                    instruction, stop and ask me first". That's a <strong>VM exit</strong>. Control jumps to the hypervisor,
+                    which looks at the request, decides what the guest gets to see, and quietly resumes it. The textbook example
+                    is <code>CPUID</code>, the instruction software uses to ask the processor who and what it is. From inside the
+                    guest, nothing looks different. That's the whole point of virtualization. As it turns out, it's also the whole
+                    point of this bypass.
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 296" role="img" aria-label="Privilege stack: normally the game runs on Windows directly on the CPU; with the bypass, a custom hypervisor sits between Windows and the CPU."><text class="d-h" x="145" y="26" text-anchor="middle">Normal</text><text class="d-h" x="455" y="26" text-anchor="middle">With the bypass</text><rect class="d-box" x="20" y="44" width="250" height="52" rx="8"/><text class="d-t" x="34" y="67">Game + Denuvo</text><text class="d-s" x="34" y="85">asks: what machine is this?</text><text class="d-r" x="258" y="67" text-anchor="end">Ring 3</text><rect class="d-box" x="20" y="106" width="250" height="52" rx="8"/><text class="d-t" x="34" y="129">Windows kernel</text><text class="d-r" x="258" y="129" text-anchor="end">Ring 0</text><rect class="d-box hw" x="20" y="168" width="250" height="52" rx="8"/><text class="d-t" x="34" y="191">CPU / hardware</text><text class="d-s" x="34" y="209">answers truthfully</text><rect class="d-box" x="330" y="44" width="250" height="52" rx="8"/><text class="d-t" x="344" y="67">Game + Denuvo</text><text class="d-s" x="344" y="85">asks the same questions</text><text class="d-r" x="568" y="67" text-anchor="end">Ring 3</text><rect class="d-box" x="330" y="106" width="250" height="52" rx="8"/><text class="d-t" x="344" y="129">Windows kernel</text><text class="d-s" x="344" y="147">now a guest, unaware</text><text class="d-r" x="568" y="129" text-anchor="end">Ring 0</text><rect class="d-box hot" x="330" y="168" width="250" height="52" rx="8"/><text class="d-t" x="344" y="191">Custom hypervisor</text><text class="d-s" x="344" y="209">intercepts and answers</text><text class="d-r alert" x="568" y="191" text-anchor="end">Ring -1</text><rect class="d-box hw" x="330" y="230" width="250" height="52" rx="8"/><text class="d-t" x="344" y="253">CPU / hardware</text><text class="d-s" x="344" y="271">never asked directly</text></svg></div>
+                    <figcaption>Fig. 1 · Same game, same questions. Different entity answering them.</figcaption>
+                </figure>
+            </section>
+
+            <section class="prose">
+                <h2><span>03</span>Don't pick the lock, move the house</h2>
+                <p>
+                    The best-known name here is <strong>DenuvOwO</strong> (yes, really), a cracker who published their hypervisor
+                    as open source. According to XDA Developers, instead of patching the game, the approach slides a thin custom hypervisor underneath an
+                    <em>already running</em> Windows, no reboot required.<sup class="cite"><a href="#src-4">4</a></sup> The game itself stays untouched, triggers and all.
+                    Denuvo keeps asking the machine its usual questions. It's just that the machine answering is no longer the
+                    machine.
+                </p>
+                <p>
+                    I find this genuinely beautiful from an engineering perspective. The fingerprinting code runs. The validation
+                    runs. Everything works exactly as designed, on <strong>fabricated inputs</strong>. Nobody breaks the
+                    cryptography; they simply control the layer the defender uses to observe reality.
+                </p>
+                <p>
+                    The idea wasn't new, either. In January 2025, reverse engineer Connor-Jay Dunn closed a detailed analysis of
+                    Denuvo by suggesting that a hypervisor could spoof all the hardware information it relies on, while warning that
+                    faking the <code>ntdll</code> and <code>KUSER_SHARED_DATA</code> checks without side effects would be the hard
+                    part.<sup class="cite"><a href="#src-12">12</a></sup> His write-up also lists <code>CPUID</code>, raw syscalls
+                    and <code>KUSER_SHARED_DATA</code> among the fingerprint sources, which is exactly the list of things the
+                    bypass ended up lying about.
+                </p>
+                <p>
+                    And judging by the public reports, because the trick doesn't depend on any particular game's code, it's largely
+                    generic: once it works for a given Denuvo version, it tends to work for every game shipping that version. That's the part that should keep
+                    Irdeto up at night. They built a per-game problem, and someone came back with a per-version solution.
+                    According to Wikipedia's timeline, day-one releases of protected games, something nobody had seen since 2018,
+                    suddenly became routine.<sup class="cite"><a href="#src-1">1</a></sup>
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>04</span>What exactly is being lied about</h2>
+                <p>
+                    According to XDA Developers' analysis, the full stack touches every privilege level of the machine. At the bottom,
+                    an optional boot-time component switches off PatchGuard, Driver Signature Enforcement and VBS before Windows
+                    even loads, so an unsigned hypervisor can get in and kernel structures can be edited without anyone
+                    complaining. At the top, a Steam emulator handles the ownership questions, which is the most boring part of
+                    the whole thing and a problem the scene solved years ago.<sup class="cite"><a href="#src-4">4</a></sup> The interesting work happens in the middle, at
+                    Ring -1, and it's mostly a list of questions Denuvo is no longer allowed to get honest answers to.
+                </p>
+                <p>
+                    The first is <code>CPUID</code>, the processor's ID card: vendor, model, feature flags. It's a core
+                    ingredient of the hardware fingerprint, and it can also reveal that a hypervisor is running. According to XDA, the
+                    bypass makes it describe the CPU the license token expects, with no hypervisor in sight.<sup class="cite"><a href="#src-4">4</a></sup> Lying
+                    about whether you're lying: a classic.
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 320" role="img" aria-label="Sequence: Denuvo executes CPUID, the CPU exits to the hypervisor, the hypervisor replaces the real answer with the expected one and resumes the guest, and Denuvo sees a matching fingerprint."><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box " x="20" y="12" width="160" height="36" rx="8"/><text class="d-t" x="100" y="35" text-anchor="middle">Denuvo (game)</text><line class="d-life" x1="100" y1="48" x2="100" y2="312"/><rect class="d-box hw" x="220" y="12" width="160" height="36" rx="8"/><text class="d-t" x="300" y="35" text-anchor="middle">CPU</text><line class="d-life" x1="300" y1="48" x2="300" y2="312"/><rect class="d-box hot" x="420" y="12" width="160" height="36" rx="8"/><text class="d-t" x="500" y="35" text-anchor="middle">Hypervisor</text><line class="d-life" x1="500" y1="48" x2="500" y2="312"/><line class="d-arrow " x1="100" y1="92" x2="296" y2="92" marker-end="url(#arr2)"/><text class="d-l" x="198.0" y="84" text-anchor="middle">1 · CPUID</text><line class="d-arrow " x1="300" y1="140" x2="496" y2="140" marker-end="url(#arr2)"/><text class="d-l" x="398.0" y="132" text-anchor="middle">2 · VM exit</text><rect class="d-box hot solid" x="398" y="160" width="196" height="66" rx="8"/><text class="d-m alert" x="410" y="184">real: your actual CPU</text><text class="d-m ok" x="410" y="212">sent: the expected CPU</text><line class="d-arrow hot" x1="500" y1="262" x2="104" y2="262" marker-end="url(#arr2h)"/><text class="d-l" x="302.0" y="254" text-anchor="middle">3 · VM entry: spoofed values</text><text class="d-m ok" x="24" y="300">✓ fingerprint matches token</text></svg></div>
+                    <figcaption>Fig. 2 · A single intercepted CPUID. The check runs correctly; its input doesn't.</figcaption>
+                </figure>
+                <p>
+                    Then there's timing. VM exits aren't free; Xen developer Keir Fraser estimated each one at around a thousand
+                    cycles<sup class="cite"><a href="#src-7">7</a></sup>, and a program that
+                    times instructions which should be instant (with <code>RDTSC</code>, say) can notice the detour. So, according to
+                    XDA, the bypass also hides that detour from the clock. If the clock says nothing
+                    happened, nothing happened.<sup class="cite"><a href="#src-4">4</a></sup>
+                </p>
+                <p>
+                    Next, <code>KUSER_SHARED_DATA</code>: a read-only page Windows maps at a fixed address in every process,
+                    holding system time, OS version and processor feature details. Protections love it because they can read it
+                    without calling a single API, which makes it resistant to hooking. A great property right up until whoever
+                    lives below the operating system decides to edit it, which, according to crackrelease.com's write-up, is
+                    exactly what happens.<sup class="cite"><a href="#src-5">5</a></sup>
+                </p>
+                <p>
+                    Protections also like to skip the Windows API and make <strong>direct syscalls</strong>, talking to the
+                    kernel without going through anything that could be hooked in user mode. Very sensible. Unfortunately, the
+                    hypervisor is not a user-mode hook, and according to the same write-up it sees those transitions anyway.<sup class="cite"><a href="#src-5">5</a></sup>
+                </p>
+                <p>
+                    And finally <code>SGDT</code>, an old instruction that reveals where the CPU's global descriptor table lives
+                    in memory. It's a sibling of <code>SIDT</code>, the instruction behind Joanna Rutkowska's "Red Pill", one of the
+                    first VM detection tricks, from around 2004 and now old enough to rent a car.<sup class="cite"><a href="#src-8">8</a>,<a href="#src-9">9</a></sup> Values like these differ
+                    between real and virtualized machines, so <code>SGDT</code> works as both a fingerprint input and a hypervisor
+                    detector, and, per the same write-up, it gets emulated too.<sup class="cite"><a href="#src-5">5</a></sup>
+                </p>
+                <p>
+                    None of this is exotic. These are the standard ways a program asks "where am I?". The bypass just makes sure
+                    the answer is always <strong>"exactly where you expected"</strong>.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>05</span>Meanwhile, on Linux</h2>
+                <p>
+                    According to Wikipedia and crackrelease.com, in mid-2026 a developer going by LinUwUx (the naming convention in this scene is, let's say, consistent)
+                    ported the approach to Linux, using DenuvOwO's open-source hypervisor as a reference.<sup class="cite"><a href="#src-1">1</a>,<a href="#src-5">5</a></sup> GameGPU reports a claim of
+                    173 working games, Steam Deck included.<sup class="cite"><a href="#src-6">6</a></sup> And the funny part is how little of it needs a hypervisor at all.
+                </p>
+                <p>
+                    Think about it: on Linux, the game is <em>already</em> running inside a fake Windows. Wine, with all due
+                    respect to the people who've spent decades building it, is a very elaborate and very well-intentioned lie.
+                    According to crackrelease.com, the bypass just adds a few more lines to the script, from inside the game's own process:
+                </p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Check</th><th>Windows (hypervisor)</th><th>Linux (Proton/Wine)</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>CPUID</code></td><td>Trapped via VM exit at Ring -1</td><td><strong>CPUID faulting</strong>, a documented CPU feature that lets the answer come from inside the process.</td></tr>
+                            <tr><td><code>KUSER_SHARED_DATA</code></td><td>Edited from below the OS</td><td>Wine emulates this page itself.</td></tr>
+                            <tr><td>Direct syscalls</td><td>Seen by the hypervisor</td><td>Linux's <strong>Syscall User Dispatch</strong>, which Wine already uses for games that make raw Windows syscalls.</td></tr>
+                            <tr><td><code>SGDT</code></td><td>Emulated by the hypervisor</td><td>The weak spot: a Linux hardening feature (<strong>UMIP</strong>) gets in the way.<sup class="cite"><a href="#src-5">5</a></sup></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>
+                    CPUID faulting is the piece that decides whether you still need a hypervisor. It's a documented CPU feature
+                    that Linux exposes per process. As rr's author Robert O'Callahan explained, it was originally added in kernel 4.12
+                    for something deeply unglamorous: the rr record-and-replay debugger.<sup class="cite"><a href="#src-10">10</a></sup> It's now enjoying an unexpected second career. According to crackrelease.com, recent Intel CPUs have it, and so does AMD from Zen 4
+                    with a recent kernel. Older Ryzen chips, Steam Deck included, don't, and reportedly still rely on a hypervisor
+                    to fake it.<sup class="cite"><a href="#src-5">5</a></sup>
+                </p>
+                <figure class="fig">
+                    <div class="fig-scroll"><svg viewBox="0 0 600 240" role="img" aria-label="Linux flow: the game executes CPUID, the CPU faults, the kernel delivers SIGSEGV to a handler inside the Wine process, which writes the expected values and resumes the game."><defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker></defs><rect class="d-zone" x="12" y="8" width="238" height="222" rx="12"/><text class="d-s" x="28" y="28">inside the game's process</text><rect class="d-box" x="30" y="40" width="200" height="56" rx="8"/><text class="d-t" x="44" y="63">Game + Denuvo</text><text class="d-s" x="44" y="81">runs CPUID</text><rect class="d-box hot" x="30" y="154" width="200" height="56" rx="8"/><text class="d-t" x="44" y="177">Wine signal handler</text><text class="d-s" x="44" y="195">fills in expected values</text><rect class="d-box hw" x="370" y="40" width="210" height="56" rx="8"/><text class="d-t" x="384" y="63">CPU</text><text class="d-s" x="384" y="81">CPUID faulting enabled</text><rect class="d-box" x="370" y="154" width="210" height="56" rx="8"/><text class="d-t" x="384" y="177">Linux kernel</text><text class="d-s" x="384" y="195">turns the fault into a signal</text><line class="d-arrow" x1="230" y1="68" x2="366" y2="68" marker-end="url(#arr3)"/><text class="d-l" x="298" y="60" text-anchor="middle">1 · CPUID</text><line class="d-arrow" x1="475" y1="96" x2="475" y2="150" marker-end="url(#arr3)"/><text class="d-l" x="485" y="128">2 · fault</text><line class="d-arrow" x1="370" y1="182" x2="234" y2="182" marker-end="url(#arr3)"/><text class="d-l" x="302" y="174" text-anchor="middle">3 · SIGSEGV</text><line class="d-arrow hot" x1="130" y1="154" x2="130" y2="100" marker-end="url(#arr3)"/><text class="d-l" x="140" y="132">4 · resume</text></svg></div>
+                    <figcaption>Fig. 3 · The Linux version of the same lie. No Ring -1: the answer comes from inside the process.</figcaption>
+                </figure>
+                <p>
+                    That contrast is the real takeaway. On Windows, telling a convincing lie meant going below the kernel and
+                    switching off half the platform's security. On Linux it mostly fits into extension points that already exist:
+                    a signal handler, a memory page Wine owns anyway, a syscall dispatcher. Cheaper, though not free: you're
+                    still running unofficial Proton builds, and on some machines turning off a kernel hardening feature.
+                </p>
+                <p>
+                    There's also a slightly bitter irony here. The people most likely to pay for all this are Linux players with
+                    perfectly legitimate copies. If Denuvo's answer is to lean harder on Windows kernel features that Wine can't
+                    faithfully reproduce, games that run fine on Proton today may stop running tomorrow, for the people who
+                    actually bought them.<sup class="cite"><a href="#src-4">4</a></sup>
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>06</span>The bill, please</h2>
+                <p>
+                    On Windows, none of this is free. As The FPS Review reported, to load a homemade hypervisor under the kernel, you have to switch off
+                    <strong>Secure Boot</strong>, <strong>Virtualization-Based Security</strong> and friends: the exact features
+                    Microsoft spent the better part of a decade begging everyone to turn on. Secure Boot is what stops untrusted
+                    code from running before Windows starts. VBS and HVCI use Microsoft's own hypervisor to protect the kernel,
+                    and they also happen to occupy the very seat the bypass wants to sit in. So they have to go.<sup class="cite"><a href="#src-2">2</a></sup>
+                </p>
+                <p>
+                    What you're left with is a machine where the most privileged code running is a binary someone downloaded from
+                    a forum, sitting below the OS and below any antivirus that might have had an opinion about it. Joanna
+                    Rutkowska demonstrated exactly this scenario as a hypothetical rootkit, Blue Pill, back in 2006.<sup class="cite"><a href="#src-11">11</a></sup> Twenty years
+                    later, people are installing it voluntarily to save seventy euros. That's a bold risk assessment.
+                </p>
+                <p>
+                    Tellingly, PCWorld reported that some crackers refuse to use the method at all.<sup class="cite"><a href="#src-3">3</a></sup> When the people with the least respect for
+                    DRM on the planet think the cure is worse than the disease, it's worth listening. And as a bonus, per the same article, it can break
+                    anti-cheat systems that require Secure Boot, and cause performance or compatibility issues on some CPUs.<sup class="cite"><a href="#src-3">3</a></sup>
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>07</span>The arms race</h2>
+                <p>
+                    Irdeto's public response, to TorrentFreak, was that it's "already working on updated security versions for
+                    games impacted by hypervisor bypasses" and that performance won't suffer.<sup class="cite"><a href="#src-2">2</a></sup> It also reportedly said the fix won't
+                    involve Denuvo itself moving to Ring -1 or deeper into the kernel,<sup class="cite"><a href="#src-2">2</a></sup> which is reassuring, because the only thing
+                    worse than a DRM in your kernel would be a DRM in your hypervisor. According to Wikipedia, in September 2026 the company also took
+                    the legal route and filed a DMCA anti-circumvention lawsuit against one of the people behind the releases.<sup class="cite"><a href="#src-1">1</a></sup>
+                </p>
+                <p>
+                    Technically, the options for spotting a hidden hypervisor are well known, and none of them are great. Checking
+                    <code>CPUID</code> for a hypervisor is, as we've seen, asking the liar if he's lying. Timing checks work in
+                    theory, but the hypervisor can compensate the clock and real hardware is noisy enough to make thresholds
+                    fragile. Requiring Secure Boot or VBS to be on would work, at the cost of locking out Linux, the Steam Deck and
+                    plenty of older setups. More frequent online validation works too, and punishes exactly the customers who
+                    paid. Every option moves the cost onto someone, and historically that someone has been the person with the
+                    receipt.
+                </p>
+            </section>
+
+            <section class="prose">
+                <h2><span>08</span>What defenders should take from this</h2>
+                <p>
+                    The obvious lesson is the oldest one in the book: <strong>the client is not yours</strong>. Any check that runs
+                    on hardware the attacker controls can eventually be fed false inputs. Anti-tamper buys time; it doesn't buy
+                    guarantees. Denuvo always knew this. The surprise was how much time the hypervisor approach took off the clock.
+                </p>
+                <p>
+                    The more interesting lesson is about <strong>where</strong> attacks land. The best bypasses rarely beat your
+                    algorithm. They control what it sees: emulators, hooked APIs, spoofed sensors, and in this case an entirely
+                    fictional CPU. If your security model assumes the environment is honest, the environment is your attack
+                    surface. And in that fight, whoever sits lower in the stack wins, whether we're talking about DRM, anti-cheat,
+                    EDR or malware.
+                </p>
+                <p>
+                    Finally, security trade-offs are contagious. A bypass that requires turning off Secure Boot and VBS doesn't just
+                    defeat a DRM. It downgrades the security of the whole machine, for everything else that runs on it, for as long
+                    as it stays that way.
+                </p>
+            </section>
+
+            <p class="outro">
+                What I like about this whole story, as an engineer, is that the bypass isn't clever about its target. It's clever
+                about where it stands. The cheapest way past a security check is rarely to defeat it. It's to make it believe in a
+                different world, and then let it do its job perfectly.
+            </p>
+
+            <section class="sources">
+                <h2>Sources</h2>
+                <ol>
+                    <li id="src-1"><a href="https://en.wikipedia.org/wiki/Denuvo" target="_blank" rel="noopener">Denuvo</a>, Wikipedia. How activation and fingerprinting work, 2026 timeline, Linux port, DMCA lawsuit.</li>
+                    <li id="src-2"><a href="https://www.thefpsreview.com/2026/04/03/denuvo-has-been-broken-hypervisor-bypasses-enable-day-zero-cracks-irdeto-promises-a-fix/" target="_blank" rel="noopener">Denuvo Has Been Broken: Hypervisor Bypasses Enable Day-Zero Cracks, Irdeto Promises a Fix</a>, The FPS Review, April 2026. Irdeto's statement to TorrentFreak, required Windows protections.</li>
+                    <li id="src-3"><a href="https://www.pcworld.com/article/3104672/cracking-denuvo-games-in-windows-just-got-easier-and-insanely-dangerous.html" target="_blank" rel="noopener">Cracking Denuvo games in Windows just got easier, and insanely dangerous</a>, PCWorld, April 2026. Security risks, crackers refusing the method.</li>
+                    <li id="src-4"><a href="https://www.xda-developers.com/linux-gamers-didnt-do-wrong-pay-windows-piracy/" target="_blank" rel="noopener">Linux gamers didn't do anything wrong, but they might pay for Windows piracy anyway</a>, XDA Developers. Layered stack, CPUID and RDTSC spoofing, consequences for Linux.</li>
+                    <li id="src-5"><a href="https://crackrelease.com/denuvo-hypervisor-bypass-reaches-linux/" target="_blank" rel="noopener">Denuvo Hypervisor Bypass Reaches Linux</a>, crackrelease.com. Intercepted checks (KUSER_SHARED_DATA, syscalls, SGDT), CPUID faulting, Syscall User Dispatch, UMIP, hardware requirements.</li>
+                    <li id="src-6"><a href="https://en.gamegpu.com/news/igry/igry-s-zashchitoj-denuvo-teper-rabotayut-na-linux-blagodarya-denuvowo" target="_blank" rel="noopener">Denuvo-protected games now run on Linux thanks to DenuvOwO</a>, GameGPU. Claimed game count and Steam Deck support.</li>
+                    <li id="src-7"><a href="https://old-list-archives.xen.org/archives/html/xen-devel/2009-03/msg00240.html" target="_blank" rel="noopener">Re: How expensive is a VM EXIT?</a>, Keir Fraser, xen-devel mailing list, March 2009. Estimated cost of a VM exit.</li>
+                    <li id="src-8"><a href="https://static.usenix.org/events/woot09/tech/full_papers/paleari.pdf" target="_blank" rel="noopener">A fistful of red-pills: How to automatically generate procedures to detect CPU emulators</a>, Paleari et al., USENIX WOOT 2009. Red Pill as one of the first VM detection tests.</li>
+                    <li id="src-9"><a href="https://lists.openwall.net/bugtraq/2007/03/03/8" target="_blank" rel="noopener">Bugtraq discussion on SIDT and RedPill</a>, March 2007. Red Pill relies on <code>SIDT</code>; published more than two years earlier.</li>
+                    <li id="src-10"><a href="https://robert.ocallahan.org/2017/09/rr-trace-portability.html" target="_blank" rel="noopener">rr Trace Portability</a>, Robert O'Callahan, September 2017. CPUID faulting exposed via <code>arch_prctl</code> in Linux 4.12 for rr.</li>
+                    <li id="src-11"><a href="https://en.wikipedia.org/wiki/Blue_Pill_(software)" target="_blank" rel="noopener">Blue Pill (software)</a>, Wikipedia. Joanna Rutkowska's hypervisor rootkit, Black Hat 2006.</li>
+                    <li id="src-12"><a href="https://connorjaydunn.github.io/blog/posts/denuvo-analysis/" target="_blank" rel="noopener">Denuvo Analysis</a>, Connor-Jay Dunn, January 2025. Fingerprint sources and the suggestion of a hypervisor to spoof hardware information.</li>
+                </ol>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <span>© 2026 José Antonio Nicolás Navarro</span>
+            <a href="../index.html">← back to home</a>
+        </div>
+    </footer>
+
+</body>
+</html>
