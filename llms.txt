@@ -1,0 +1,22 @@
+# José Antonio Nicolás Navarro
+
+> R&D Engineer at Zepo (Madrid) working on AI for cybersecurity and human risk: detecting social engineering across email, chat, voice and video (phishing, vishing, deepfakes). MSc in Artificial Intelligence (UPM) and MSc in Cybersecurity (UOC).
+
+## Profile
+
+- [Home](https://tohzzicklao.github.io/index.html): experience, featured projects, skills, education, awards and publications
+
+## Blog
+
+- [Blog index](https://tohzzicklao.github.io/blog/index.html): list of all posts
+- [Security Checklist for Vibecoded Apps](https://tohzzicklao.github.io/blog/vibecoded-security-checklist.html): practical checklist for apps built with AI coding assistants (secrets, authorization, RLS, input handling, LLM features, deployment, coding agents)
+- [Lying from Ring -1: the Denuvo Hypervisor Bypass](https://tohzzicklao.github.io/blog/denuvo-hypervisor-bypass.html): educational analysis of how hypervisor-based bypasses defeat Denuvo, the Linux port without a hypervisor, and lessons about trusting the client
+- [Inside Denuvo: How the Most Hated DRM Actually Works](https://tohzzicklao.github.io/blog/how-denuvo-works.html): deep dive into how Denuvo Anti-Tamper works (hardware-bound tokens, stolen constants, custom VM, integrity checks, performance, economics)
+- [Bigger Is Predictable: a Short History of LLM Scaling Laws](https://tohzzicklao.github.io/blog/llm-scaling-laws.html): history of LLM scaling laws (Hestness, Kaplan, Chinchilla, emergence debate, inference-aware scaling, data wall, test-time compute, METR task horizons)
+- [Half a Second Too Slow: the xz-utils Backdoor](https://tohzzicklao.github.io/blog/xz-utils-backdoor.html): the xz-utils backdoor (CVE-2024-3094): social engineering of a lone maintainer, payload hidden in test files and release tarballs, the sshd route, its discovery and lessons for defenders
+- [Who Buys the Fords? AI and the Economy Without Customers](https://tohzzicklao.github.io/blog/who-buys-the-fords.html): essay on AI and the socioeconomic model (wages as demand, the Ford myth, fallacy of composition, Leontief's horses, concentration of consumer spending, the intelligence curse, basic income, robot tax, ownership of AI)
+
+## Optional
+
+- [GitHub](https://github.com/Tohzzicklao)
+- [LinkedIn](https://www.linkedin.com/in/jos%C3%A9-antonio-nicol%C3%A1s-navarro-892b541b5/)

@@ -559,6 +559,7 @@
             <li><a href="#skills">skills</a></li>
             <li><a href="#education">education</a></li>
             <li><a href="#research">research</a></li>
+            <li><a href="blog/index.html">blog</a></li>
             <li><a href="#contact">contact</a></li>
         </ul>
         <div class="nav-ext">
@@ -861,10 +862,27 @@
                 </div>
             </section>
 
+            <!-- ═══════════ BLOG ═══════════ -->
+            <section id="blog">
+                <div class="sec-head reveal">
+                    <div class="sec-label">07 // BLOG</div>
+                    <h2 class="sec-title">Writing</h2>
+                </div>
+                <a href="blog/index.html" class="panel pub-card hud reveal">
+                    <div class="pub-meta"><span class="pub-type c">~/blog</span><i class="arrow" data-lucide="arrow-up-right"></i></div>
+                    <h3>Write-ups on AI and cybersecurity</h3>
+                    <div class="where">6 posts</div>
+                    <p>
+                        Deep dives, practical guides and the occasional essay on security, AI and how the two keep
+                        colliding.
+                    </p>
+                </a>
+            </section>
+
             <!-- ═══════════ CONTACT ═══════════ -->
             <section id="contact">
                 <div class="panel contact-box hud reveal">
-                    <div class="sec-label">07 // CONTACT</div>
+                    <div class="sec-label">08 // CONTACT</div>
                     <h2 class="sec-title">Let's Connect</h2>
                     <p>Working on AI, cybersecurity or human risk? I'm happy to talk.</p>
                     <div class="cta-row">
@@ -899,7 +917,7 @@
 
         // ── Nav: border on scroll, scroll-spy, mobile menu ──
         const nav = document.getElementById('nav');
-        const links = [...document.querySelectorAll('.nav-links a')];
+        const links = [...document.querySelectorAll('.nav-links a[href^="#"]')];
         const sections = links.map(a => document.querySelector(a.getAttribute('href')));
         addEventListener('scroll', () => {
             nav.classList.toggle('scrolled', scrollY > 10);

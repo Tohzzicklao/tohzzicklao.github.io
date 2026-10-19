@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A practical security checklist for apps built with AI coding assistants: secrets, auth, input handling, dependencies, LLM features and deployment.">
+    <meta property="og:title" content="Security Checklist for Vibecoded Apps">
+    <meta property="og:description" content="A practical security checklist for apps built with AI coding assistants.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://tohzzicklao.github.io/blog/vibecoded-security-checklist.html">
+    <meta name="theme-color" content="#05080d">
+    <link rel="canonical" href="https://tohzzicklao.github.io/blog/vibecoded-security-checklist.html">
+    <title>Security Checklist for Vibecoded Apps | José Antonio Nicolás</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2305080d'/%3E%3Cpath d='M50 14 82 26v24c0 19-13 31-32 37C31 81 18 69 18 50V26z' fill='none' stroke='%2300f0b5' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%237c5cff'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05080d;
+            --panel: rgba(12, 18, 28, 0.72);
+            --line: rgba(0, 240, 181, 0.12);
+            --line-strong: rgba(0, 240, 181, 0.35);
+            --text: #e6edf5;
+            --muted: #8794a6;
+            --dim: #566275;
+            --cyber: #00f0b5;
+            --neural: #7c5cff;
+            --alert: #ff4d6d;
+            --glow-c: rgba(0, 240, 181, 0.25);
+            --glow-n: rgba(124, 92, 255, 0.25);
+            --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+            --display: 'Space Grotesk', 'Inter', sans-serif;
+            --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::selection { background: var(--cyber); color: var(--bg); }
+        a { color: inherit; }
+        strong { color: #fff; font-weight: 600; }
+        code {
+            font-family: var(--mono);
+            font-size: 0.85em;
+            padding: 0.1rem 0.35rem;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.07);
+            word-break: break-word;
+        }
+
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(600px 400px at 15% 10%, var(--glow-n), transparent 70%),
+                radial-gradient(700px 500px at 90% 40%, rgba(0, 240, 181, 0.10), transparent 70%);
+        }
+        main, footer, .nav { position: relative; z-index: 1; }
+
+        /* ══════════ NAV ══════════ */
+        .nav {
+            position: sticky; top: 0;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+            background: rgba(5, 8, 13, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--line);
+        }
+        .brand {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            text-decoration: none;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .brand .p { color: var(--cyber); }
+        .brand .h { color: var(--neural); }
+        .back {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            text-decoration: none;
+            color: var(--muted);
+            padding: 0.4rem 0.7rem;
+            border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .back:hover { color: var(--cyber); background: rgba(255,255,255,0.04); }
+
+        /* ══════════ ARTICLE ══════════ */
+        .wrap { max-width: 780px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+        .post-head { padding: 4rem 0 2.5rem; }
+        .sec-label {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--cyber);
+            letter-spacing: 0.08em;
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            margin-bottom: 0.9rem;
+        }
+        .sec-label::after {
+            content: ''; width: 48px; height: 1px;
+            background: linear-gradient(90deg, var(--cyber), transparent);
+        }
+        h1 {
+            font-family: var(--display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+        h1 .grad {
+            background: linear-gradient(100deg, var(--cyber) 0%, #5fd4ff 45%, var(--neural) 100%);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+        }
+        .meta { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); }
+        .lead { color: var(--muted); font-size: 1.08rem; margin-top: 1.5rem; }
+        .lead + .lead { margin-top: 1rem; }
+
+        .panel {
+            position: relative;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        /* toolbar */
+        .toolbar {
+            position: sticky; top: var(--nav-h, 64px); z-index: 50;
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem 1.2rem;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1.3rem;
+            background: rgba(5, 8, 13, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+        }
+        .progress { display: flex; align-items: center; gap: 0.8rem; flex: 1 1 220px; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+        .bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+        .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyber), var(--neural)); transition: width 0.3s; }
+        .tools { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .tools button {
+            font-family: var(--mono); font-size: 0.72rem;
+            color: var(--muted);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.35rem 0.65rem;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .tools button:hover, .tools button[aria-pressed="true"] { color: var(--cyber); border-color: var(--line-strong); }
+
+        /* sections */
+        .block { margin-bottom: 0.9rem; }
+        .block summary {
+            display: flex; align-items: center; gap: 0.8rem;
+            padding: 1rem 1.3rem;
+            cursor: pointer;
+            list-style: none;
+        }
+        .block summary::-webkit-details-marker { display: none; }
+        .block summary::after {
+            content: '›';
+            font-family: var(--mono); color: var(--dim);
+            transition: transform 0.2s;
+        }
+        .block[open] summary::after { transform: rotate(90deg); }
+        .block h2 {
+            flex: 1;
+            display: flex; align-items: baseline; gap: 0.7rem;
+            font-family: var(--display);
+            font-size: 1.1rem; font-weight: 600;
+        }
+        .block h2 span { font-family: var(--mono); font-size: 0.75rem; color: var(--neural); font-weight: 500; }
+        .count { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+        .count.done { color: var(--cyber); }
+
+        /* items */
+        .checks { list-style: none; border-top: 1px solid var(--line); }
+        .checks li + li { border-top: 1px solid rgba(255,255,255,0.04); }
+        .item {
+            display: flex; gap: 0.85rem; align-items: flex-start;
+            padding: 0.75rem 1.3rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .item:hover { background: rgba(255,255,255,0.02); }
+        .item input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+        .box {
+            flex-shrink: 0;
+            width: 17px; height: 17px;
+            margin-top: 0.2rem;
+            border: 1.5px solid var(--line-strong);
+            border-radius: 5px;
+            display: grid; place-items: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .item input:checked + .box { background: var(--cyber); border-color: var(--cyber); }
+        .item input:checked + .box::after { content: '✓'; color: var(--bg); font-size: 0.7rem; font-weight: 700; line-height: 1; }
+        .item input:focus-visible + .box { outline: 2px solid var(--cyber); outline-offset: 2px; }
+        .txt { display: grid; gap: 0.15rem; min-width: 0; }
+        .ttl { color: var(--text); font-weight: 600; font-size: 0.95rem; }
+        .desc { color: var(--muted); font-size: 0.86rem; line-height: 1.55; }
+        .item input:checked ~ .txt .ttl { color: var(--dim); text-decoration: line-through; }
+        .item input:checked ~ .txt .desc { color: var(--dim); }
+        .tag {
+            font-family: var(--mono); font-size: 0.6rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--alert);
+            border: 1px solid rgba(255, 77, 109, 0.4);
+            border-radius: 4px;
+            padding: 0.05rem 0.35rem;
+            margin-left: 0.5rem;
+            vertical-align: 0.15em;
+        }
+        .crit-only .checks li:not(.crit) { display: none; }
+        .crit-only .block:not(:has(.crit)) { display: none; }
+
+        .callout {
+            padding: 1.3rem 1.5rem;
+            margin: 2rem 0 1.3rem;
+            border-color: rgba(255, 77, 109, 0.35);
+            background: rgba(255, 77, 109, 0.05);
+            color: var(--muted);
+        }
+        .callout strong { color: var(--alert); }
+
+        .outro { color: var(--muted); margin: 2rem 0 0; }
+        .lead, .outro { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+
+        /* ══════════ FOOTER ══════════ */
+        footer {
+            margin-top: 5rem;
+            border-top: 1px solid var(--line);
+            padding: 1.8rem 0;
+        }
+        footer .wrap {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+            font-family: var(--mono); font-size: 0.75rem; color: var(--dim);
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--cyber); }
+
+        a:focus-visible {
+            outline: 2px solid var(--cyber);
+            outline-offset: 3px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 760px) {
+            .item, .block summary { padding-left: 1rem; padding-right: 1rem; }
+        }
+        @media print {
+            .bg-glow, .nav { display: none !important; }
+            body { background: #fff; color: #111; }
+            strong, h1 .grad { color: #111; -webkit-text-fill-color: #111; }
+            .panel { background: none; border-color: #ccc; backdrop-filter: none; break-inside: avoid; }
+            .toolbar { display: none; }
+            p, li, .meta { color: #333 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <nav class="nav">
+        <a href="../index.html" class="brand"><span class="p">jose@</span><span class="h">ai-sec</span>:~$</a>
+        <a href="index.html" class="back">cd ../blog</a>
+    </nav>
+
+    <main>
+        <article class="wrap">
+            <header class="post-head">
+                <div class="sec-label">BLOG // CHECKLIST</div>
+                <h1>Security Checklist for <span class="grad">Vibecoded Apps</span></h1>
+                <div class="meta">October 19, 2026 · José Antonio Nicolás Navarro</div>
+                <p class="lead">
+                    AI coding assistants make it possible to go from idea to deployed app in an afternoon.
+                    The problem is that they optimize for <strong>"it works"</strong>, not for <strong>"it's safe"</strong>.
+                    The same patterns show up again and again: keys shipped to the browser, databases with no access rules,
+                    endpoints that trust whatever the client sends.
+                </p>
+                <p class="lead">
+                    This isn't theoretical. In early 2026, Wiz found that Moltbook, a social network for AI agents whose
+                    creator said he hadn't written a single line of code, shipped a Supabase key in its client-side JavaScript
+                    with no database-level protection behind it. Anyone could read and write the database, including private
+                    messages, user emails and over a million API keys.
+                </p>
+                <p class="lead">
+                    This is the checklist I go through before a vibecoded app touches real users or real data.
+                    None of it is exotic. Most of it takes minutes. Tick items as you go: progress is saved in your browser.
+                </p>
+            </header>
+
+            <div class="toolbar" id="toolbar">
+                <div class="progress">
+                    <span id="progText">0 / 0 done</span>
+                    <div class="bar"><i id="progBar"></i></div>
+                </div>
+                <div class="tools">
+                    <button type="button" id="critBtn" aria-pressed="false">critical only</button>
+                    <button type="button" id="foldBtn">collapse all</button>
+                    <button type="button" id="resetBtn">reset</button>
+                </div>
+            </div>
+
+            <details class="panel block" open>
+                <summary><h2><span>01</span>Secrets &amp; API keys</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li class="crit"><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">No secrets in the client.<span class="tag">critical</span></span><span class="desc">Everything in the bundle is public, including <code>NEXT_PUBLIC_</code>, <code>VITE_</code>, <code>REACT_APP_</code> and <code>EXPO_PUBLIC_</code> variables. Secret keys (<code>sk_</code>, <code>service_role</code>, DB URLs) live only on the server, never in <code>localStorage</code> or URLs. If the AI "fixes" an undefined variable by adding a public prefix, move the call to the server instead.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">No secrets in the repo.</span><span class="desc">Keep <code>.env</code> in <code>.gitignore</code> and scan history with <code>gitleaks</code> or <code>trufflehog</code>. A key that was ever committed or shipped must be rotated, not just deleted.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Paid APIs go through your backend.</span><span class="desc">Proxy LLM and other paid API calls so the provider key never reaches the browser, and set a spend ceiling with alerts on the provider dashboard.</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>02</span>Authentication &amp; authorization</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Use a proven auth provider.</span><span class="desc">No hand-rolled password hashing, sessions or JWT validation. Cookies are <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite</code>; reset and magic links are short-lived and single-use; cookie auth gets CSRF protection.</span></span></label></li>
+                    <li class="crit"><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Authorization on the server, for every object.<span class="tag">critical</span></span><span class="desc">Every route checks who the user is and whether they own the resource. Change <code>/api/invoices/123</code> to <code>124</code>: if you see someone else's data, it's an IDOR. Ignore <code>role</code> / <code>isAdmin</code> sent by the client and whitelist updatable fields.</span></span></label></li>
+                    <li class="crit"><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">RLS / security rules on every table.<span class="tag">critical</span></span><span class="desc">The Supabase <code>anon</code> key is only safe with RLS on and policies scoped to <code>auth.uid()</code>; <code>using (true)</code> is no policy. Review <code>security definer</code> functions and RPCs, which bypass RLS. In Firebase, no <code>if true</code> rules.</span></span></label></li>
+                    <li class="crit"><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Test without logging in.<span class="tag">critical</span></span><span class="desc">Hit your API and database endpoints with <code>curl</code> and only the public key. If user data comes back, everyone can get it.</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>03</span>Input &amp; output handling</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Validate on the server, query safely.</span><span class="desc">Schema-validate every input (Zod, Pydantic) and use parameterized queries only. Redirect parameters like <code>?next=</code> accept only relative paths.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">No unescaped HTML.</span><span class="desc">Grep for <code>dangerouslySetInnerHTML</code>, <code>innerHTML</code>, <code>v-html</code>. Sanitize with DOMPurify if you must, and treat LLM output the same way.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Uploads are restricted.</span><span class="desc">Limit size and type, store in a private bucket, rename files.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">URL fetchers can't reach internal hosts.</span><span class="desc">"Import from URL" and link previews are classic SSRF. Block private IP ranges and cloud metadata endpoints.</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>04</span>API &amp; backend</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li class="crit"><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Rate limits and cost caps.<span class="tag">critical</span></span><span class="desc">On login, sign-up, password reset, and anything that calls an LLM or sends email/SMS. Cap usage per user, not just globally.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Webhooks are verified.</span><span class="desc">Check the signature of every Stripe or payment webhook. Otherwise anyone can POST "payment succeeded".</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">CORS is locked down.</span><span class="desc">Only your own origins. Never a wildcard with credentials.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Nothing debug-shaped in production.</span><span class="desc">No stack traces or SQL errors in responses, no public source maps, no test, seed or admin routes the AI created "temporarily".</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>05</span>Dependencies</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Every package is real and the right one.</span><span class="desc">LLMs hallucinate package names and attackers register them (slopsquatting). Check downloads, maintainer and repo before installing.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Lockfile committed, vulnerabilities checked.</span><span class="desc">Run <code>npm audit</code> / <code>pip-audit</code> and enable Dependabot or Renovate.</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>06</span>LLM features</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Assume prompt injection.</span><span class="desc">Any text the model reads (user input, web pages, documents, emails) can carry instructions. Model output is untrusted input.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Authorization lives in the tools, not the prompt.</span><span class="desc">Each tool checks permissions server-side for the real user, with least privilege and human confirmation for destructive actions. Filter RAG results by user or tenant.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">No secrets in the system prompt.</span><span class="desc">Assume it will be extracted.</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>07</span>Deployment</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">HTTPS and security headers.</span><span class="desc">HSTS, <code>Content-Security-Policy</code>, <code>X-Content-Type-Options: nosniff</code>, <code>frame-ancestors</code>.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Storage is private by default.</span><span class="desc">Buckets are not public; user files are served with signed URLs.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Backups you've actually restored.</span><span class="desc">Stored where your app and your AI agent can't delete them.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Logs without secrets or PII.</span><span class="desc">Configure error tracking (Sentry, etc.) to scrub tokens and passwords.</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>08</span>Your AI coding agent</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li class="crit"><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">No production credentials.<span class="tag">critical</span></span><span class="desc">The agent works against a dev database with scoped tokens.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Irreversible actions need a human.</span><span class="desc">No auto-approve for migrations, deletes, deploys or <code>git push --force</code>.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Its inputs are untrusted.</span><span class="desc">READMEs, issues and web pages can carry prompt injection. Review rules files (<code>AGENTS.md</code>, <code>.cursorrules</code>) like code and install only MCP servers you trust.</span></span></label></li>
+                </ul>
+            </details>
+
+            <details class="panel block" open>
+                <summary><h2><span>09</span>Process</h2><span class="count">0/0</span></summary>
+                <ul class="checks">
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Read the diff.</span><span class="desc">Especially auth, database and anything touching money. Ask the AI for a security review too, then verify it.</span></span></label></li>
+                    <li><label class="item"><input type="checkbox"><span class="box" aria-hidden="true"></span><span class="txt"><span class="ttl">Attack it yourself.</span><span class="desc">Two accounts, browser dev tools, try to reach each other's data. Add a scanner like Semgrep or OWASP ZAP.</span></span></label></li>
+                </ul>
+            </details>
+
+            <div class="panel callout">
+                <strong>If you only do three things:</strong> keep secrets off the client, enforce authorization on the server
+                (RLS included), and rate limit anything that costs you money.
+            </div>
+
+            <p class="outro">
+                Shipping fast is fine. Shipping fast with an open database is how your app ends up in someone's breach writeup.
+                Run through this list once before launch, and again whenever the AI rewrites something important.
+            </p>
+        </article>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <span>© 2026 José Antonio Nicolás Navarro</span>
+            <a href="../index.html">← back to home</a>
+        </div>
+    </footer>
+
+    <script>
+        (() => {
+            const KEY = 'vibecoded-checklist-v2';
+            const setNavH = () => document.documentElement.style.setProperty('--nav-h', document.querySelector('.nav').offsetHeight + 'px');
+            setNavH();
+            addEventListener('resize', setNavH);
+            const boxes = [...document.querySelectorAll('.item input')];
+            const sections = [...document.querySelectorAll('details.block')];
+            let saved = [];
+            try { saved = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) {}
+            boxes.forEach((b, i) => { b.checked = !!saved[i]; });
+
+            const update = () => {
+                const done = boxes.filter(b => b.checked).length;
+                document.getElementById('progText').textContent = `${done} / ${boxes.length} done`;
+                document.getElementById('progBar').style.width = `${done / boxes.length * 100}%`;
+                sections.forEach(s => {
+                    const bs = [...s.querySelectorAll('.item input')];
+                    const n = bs.filter(b => b.checked).length;
+                    const c = s.querySelector('.count');
+                    c.textContent = `${n}/${bs.length}`;
+                    c.classList.toggle('done', n === bs.length);
+                });
+                try { localStorage.setItem(KEY, JSON.stringify(boxes.map(b => b.checked))); } catch (e) {}
+            };
+            boxes.forEach(b => b.addEventListener('change', update));
+            update();
+
+            const critBtn = document.getElementById('critBtn');
+            critBtn.addEventListener('click', () => {
+                const on = document.body.classList.toggle('crit-only');
+                critBtn.setAttribute('aria-pressed', on);
+            });
+
+            const foldBtn = document.getElementById('foldBtn');
+            foldBtn.addEventListener('click', () => {
+                const open = sections.every(s => !s.open);
+                sections.forEach(s => { s.open = open; });
+                foldBtn.textContent = open ? 'collapse all' : 'expand all';
+            });
+
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                boxes.forEach(b => { b.checked = false; });
+                update();
+            });
+        })();
+    </script>
+
+</body>
+</html>
