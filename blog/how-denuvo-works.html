@@ -269,7 +269,7 @@
             <header class="post-head">
                 <div class="sec-label">BLOG // DEEP DIVE</div>
                 <h1>Inside Denuvo: <span class="grad">how the most hated DRM actually works</span></h1>
-                <div class="meta">September 10, 2026 · José Antonio Nicolás Navarro</div>
+                <div class="meta">September 10, 2026 | José Antonio Nicolás Navarro</div>
                 <p class="lead">
                     Ask a PC gamer what Denuvo does and you'll usually get one of two answers: "it kills performance" or
                     "it gets cracked anyway". Ask them how it works and you'll mostly get silence. That's not their fault.
@@ -309,7 +309,8 @@
             <section class="prose">
                 <h2><span>02</span>The license: a token cut to your machine</h2>
                 <p>
-                    According to Maurice Heumann, who reverse engineered the Denuvo build in Hogwarts Legacy, the flow looks like
+                    According to Maurice Heumann, who reverse engineered the Denuvo build in Hogwarts Legacy (took the compiled game apart to work out what the
+                    protection does, without access to its source code), the flow looks like
                     this. The first time you launch a protected game, it collects a set of
                     hardware and software properties into a <strong>fingerprint</strong> and asks Steam for a ticket proving you own
                     the game. Both go to Denuvo's servers, which check the ticket and send back a <strong>token</strong> that only
@@ -318,8 +319,8 @@
                     "semi-online DRM", which is about right.<sup class="cite"><a href="#src-2">2</a></sup>
                 </p>
                 <figure class="fig">
-                    <div class="fig-scroll"><svg viewBox="0 0 600 316" role="img" aria-label="Activation sequence: the game sends a fingerprint and a Steam ticket to Denuvo's server, the server checks ownership with Steam, and returns a token bound to that fingerprint, which the game caches."><defs><marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="12" width="160" height="36" rx="8"/><text class="d-t" x="100" y="35" text-anchor="middle">Game (Denuvo)</text><line class="d-life" x1="100" y1="48" x2="100" y2="260"/><rect class="d-box hw" x="220" y="12" width="160" height="36" rx="8"/><text class="d-t" x="300" y="35" text-anchor="middle">Denuvo server</text><line class="d-life" x1="300" y1="48" x2="300" y2="260"/><rect class="d-box hw" x="420" y="12" width="160" height="36" rx="8"/><text class="d-t" x="500" y="35" text-anchor="middle">Steam</text><line class="d-life" x1="500" y1="48" x2="500" y2="260"/><line class="d-arrow" x1="100" y1="92" x2="296" y2="92" marker-end="url(#arr1)"/><text class="d-l" x="200" y="84" text-anchor="middle">1 · fingerprint + ticket</text><line class="d-arrow" x1="300" y1="138" x2="496" y2="138" marker-end="url(#arr1)"/><text class="d-l" x="400" y="130" text-anchor="middle">2 · valid ticket?</text><line class="d-arrow" x1="500" y1="184" x2="304" y2="184" marker-end="url(#arr1)"/><text class="d-l" x="400" y="176" text-anchor="middle">3 · yes, owns it</text><line class="d-arrow hot" x1="300" y1="230" x2="104" y2="230" marker-end="url(#arr1h)"/><text class="d-l" x="200" y="222" text-anchor="middle">4 · token for this PC</text><text class="d-m ok" x="24" y="288">✓ token cached, game runs offline</text><text class="d-s" x="24" y="306">new fingerprint → new activation</text></svg></div>
-                    <figcaption>Fig. 1 · Activation, as reconstructed from outside. Step 2 is an educated guess, not documented.</figcaption>
+                    <div class="fig-scroll"><svg viewBox="0 0 600 316" role="img" aria-label="Activation sequence: the game sends a fingerprint and a Steam ticket to Denuvo's server, the server checks ownership with Steam, and returns a token bound to that fingerprint, which the game caches."><defs><marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr1h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="12" width="160" height="36" rx="8"/><text class="d-t" x="100" y="35" text-anchor="middle">Game (Denuvo)</text><line class="d-life" x1="100" y1="48" x2="100" y2="260"/><rect class="d-box hw" x="220" y="12" width="160" height="36" rx="8"/><text class="d-t" x="300" y="35" text-anchor="middle">Denuvo server</text><line class="d-life" x1="300" y1="48" x2="300" y2="260"/><rect class="d-box hw" x="420" y="12" width="160" height="36" rx="8"/><text class="d-t" x="500" y="35" text-anchor="middle">Steam</text><line class="d-life" x1="500" y1="48" x2="500" y2="260"/><line class="d-arrow" x1="100" y1="92" x2="296" y2="92" marker-end="url(#arr1)"/><text class="d-l" x="200" y="84" text-anchor="middle">1. fingerprint + ticket</text><line class="d-arrow" x1="300" y1="138" x2="496" y2="138" marker-end="url(#arr1)"/><text class="d-l" x="400" y="130" text-anchor="middle">2. valid ticket?</text><line class="d-arrow" x1="500" y1="184" x2="304" y2="184" marker-end="url(#arr1)"/><text class="d-l" x="400" y="176" text-anchor="middle">3. yes, owns it</text><line class="d-arrow hot" x1="300" y1="230" x2="104" y2="230" marker-end="url(#arr1h)"/><text class="d-l" x="200" y="222" text-anchor="middle">4. token for this PC</text><text class="d-m ok" x="24" y="288">✓ token cached, game runs offline</text><text class="d-s" x="24" y="306">new fingerprint → new activation</text></svg></div>
+                    <figcaption>Fig. 1. Activation, as reconstructed from outside. Step 2 is an educated guess, not documented.</figcaption>
                 </figure>
                 <p>
                     The fingerprint is also why Denuvo has activation limits. According to Wikipedia, each license allows five devices in a 24-hour window, and
@@ -341,19 +342,22 @@
                     them back.<sup class="cite"><a href="#src-2">2</a></sup>
                 </p>
                 <p>
-                    Take an instruction like <code>mov dword ptr [rbp-4], edi</code>. The <code>-4</code> never changes after
-                    compilation, so it can be cut out of the binary entirely. The function is moved into Denuvo's virtual machine, and
+                    Take an instruction like <code>mov dword ptr [rbp-4], edi</code>. If assembly isn't your thing: it copies a value
+                    from a CPU register (<code>edi</code>) into a local variable stored 4 bytes below a reference point on the stack
+                    (<code>rbp</code>). The <code>-4</code> is chosen by the compiler and never changes afterwards, so it can be cut out of
+                    the binary entirely. The function is moved into Denuvo's virtual machine (more on that in section 05), and
                     the missing value is stored server-side, <strong>mixed with your hardware identifiers</strong> through reversible
                     math. That mixture is what ends up in your license. At runtime, the VM reads your hardware again, undoes the math
                     and recovers <code>-4</code>, then executes the original instruction.<sup class="cite"><a href="#src-2">2</a></sup>
                     Heumann, from the other side, saw the same thing: the token is used "to e.g. decrypt certain values at runtime".<sup class="cite"><a href="#src-3">3</a></sup>
                     Dunn adds that after the first activation the license is kept as a local file, and that before handing control
-                    to the game's original entry point (OEP), Denuvo writes parts of it into DWORDs scattered around the
-                    <code>.vm</code> section, where the VM code lives.<sup class="cite"><a href="#src-2">2</a></sup>
+                    to the game's original entry point (OEP: the spot where the game's own code would start running if Denuvo weren't
+                    wrapped around it), Denuvo writes parts of it into DWORDs (32-bit values) scattered around the <code>.vm</code>
+                    section, the region of the executable where the VM code lives.<sup class="cite"><a href="#src-2">2</a></sup>
                 </p>
                 <figure class="fig">
-                    <div class="fig-scroll"><svg viewBox="0 0 600 240" role="img" aria-label="Stolen constants: a constant is removed from the binary at protection time, mixed with the fingerprint into the license on the server, and recovered at runtime from the license and the current hardware; the same PC gets the right value, a different PC gets garbage and crashes."><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="16" width="260" height="78" rx="8"/><text class="d-h" x="34" y="38">1 · PROTECTION TIME</text><text class="d-m" x="34" y="62">mov [rbp-4], edi</text><text class="d-s" x="34" y="82">the -4 is cut out of the binary</text><rect class="d-box hw" x="320" y="16" width="260" height="78" rx="8"/><text class="d-h" x="334" y="38">2 · ACTIVATION</text><text class="d-m" x="334" y="62">lic = f(-4, fingerprint)</text><text class="d-s" x="334" y="82">shipped inside your token</text><line class="d-arrow" x1="280" y1="55" x2="316" y2="55" marker-end="url(#arr2)"/><rect class="d-box" x="20" y="146" width="260" height="78" rx="8"/><text class="d-h" x="34" y="168">3 · RUNTIME, IN THE VM</text><text class="d-m" x="34" y="192">f⁻¹(lic, hw_now) = ?</text><text class="d-s" x="34" y="212">hardware is read again</text><line class="d-arrow" x1="380" y1="94" x2="234" y2="142" marker-end="url(#arr2)"/><rect class="d-box" x="320" y="146" width="260" height="34" rx="8"/><text class="d-m ok" x="334" y="168">same PC  → -4, game runs</text><rect class="d-box hot" x="320" y="190" width="260" height="34" rx="8"/><text class="d-m alert" x="334" y="212">other PC → junk, crash</text><line class="d-arrow" x1="280" y1="163" x2="316" y2="163" marker-end="url(#arr2)"/><line class="d-arrow hot" x1="280" y1="207" x2="316" y2="207" marker-end="url(#arr2h)"/></svg></div>
-                    <figcaption>Fig. 2 · There is no "is the license valid?" check to patch. A wrong machine just computes wrong numbers.</figcaption>
+                    <div class="fig-scroll"><svg viewBox="0 0 600 240" role="img" aria-label="Stolen constants: a constant is removed from the binary at protection time, mixed with the fingerprint into the license on the server, and recovered at runtime from the license and the current hardware; the same PC gets the right value, a different PC gets garbage and crashes."><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box" x="20" y="16" width="260" height="78" rx="8"/><text class="d-h" x="34" y="38">1. PROTECTION TIME</text><text class="d-m" x="34" y="62">mov [rbp-4], edi</text><text class="d-s" x="34" y="82">the -4 is cut out of the binary</text><rect class="d-box hw" x="320" y="16" width="260" height="78" rx="8"/><text class="d-h" x="334" y="38">2. ACTIVATION</text><text class="d-m" x="334" y="62">lic = f(-4, fingerprint)</text><text class="d-s" x="334" y="82">shipped inside your token</text><line class="d-arrow" x1="280" y1="55" x2="316" y2="55" marker-end="url(#arr2)"/><rect class="d-box" x="20" y="146" width="260" height="78" rx="8"/><text class="d-h" x="34" y="168">3. RUNTIME, IN THE VM</text><text class="d-m" x="34" y="192">f⁻¹(lic, hw_now) = ?</text><text class="d-s" x="34" y="212">hardware is read again</text><line class="d-arrow" x1="380" y1="94" x2="234" y2="142" marker-end="url(#arr2)"/><rect class="d-box" x="320" y="146" width="260" height="34" rx="8"/><text class="d-m ok" x="334" y="168">same PC  → -4, game runs</text><rect class="d-box hot" x="320" y="190" width="260" height="34" rx="8"/><text class="d-m alert" x="334" y="212">other PC → junk, crash</text><line class="d-arrow" x1="280" y1="163" x2="316" y2="163" marker-end="url(#arr2)"/><line class="d-arrow hot" x1="280" y1="207" x2="316" y2="207" marker-end="url(#arr2h)"/></svg></div>
+                    <figcaption>Fig. 2. There is no "is the license valid?" check to patch. A wrong machine just computes wrong numbers.</figcaption>
                 </figure>
                 <p>
                     This is the core idea, and it's a good one. On the wrong machine nothing says "invalid license": you just get a
@@ -375,11 +379,15 @@
                     they fall into a few groups: what the CPU reports about itself, information requested directly from the Windows
                     kernel, data Windows shares with every process, details that pin down your exact Windows build, and a few
                     ordinary system properties. Notice how many of them deliberately avoid the normal Windows API, which is the
-                    easiest layer to hook.
+                    easiest layer to hook. The Windows API is the set of documented functions programs normally use to ask the system
+                    for information, and hooking means intercepting one of those calls so it returns whatever you want. It's the first
+                    thing anyone tampering with a program tries, so a fingerprint built on it would be easy to fake.
                 </p>
                 <p>
                     Finding all of them is the hard part of any attack. Heumann, who spent his free time on Hogwarts Legacy's
-                    Denuvo in 2023–2024, ran the game inside the Qiling emulation framework, spoofed one feature at a time and watched
+                    Denuvo in 2023–2024, ran the game inside the Qiling emulation framework (a tool that simulates a CPU and an operating system in
+                    software, so every instruction the program runs and every answer it receives can be observed and changed), faked
+                    one feature at a time and watched
                     whether a valid token got rejected. Finding most features took about two months. Finding the last one took three
                     more, and he only found it by accident.<sup class="cite"><a href="#src-3">3</a></sup>
                 </p>
@@ -389,12 +397,19 @@
                 <h2><span>05</span>The VM, and why reading it hurts</h2>
                 <p>
                     In Dunn's description, the functions holding stolen constants don't run as normal x86. They're translated into bytecode for a custom
-                    virtual CPU, and a small interpreter embedded in the game executes it. Code virtualization isn't new (VMProtect
+                    virtual CPU, an instruction set Denuvo invents and no real processor understands, and a small interpreter embedded
+                    in the game executes it one instruction at a time. For an analyst this means the usual tools stop helping: a
+                    disassembler shows you the interpreter, not the program it's running, so first you have to work out what the
+                    made-up instruction set means. Code virtualization isn't new (VMProtect
                     and Themida do it too), but Denuvo's VM has some nasty personal touches.<sup class="cite"><a href="#src-2">2</a></sup>
                 </p>
                 <p>
-                    According to his analysis, dispatch goes through a handler table: each handler computes the address of the next one and jumps there by
-                    pushing it onto the stack and executing <code>ret</code>, which makes control flow miserable to follow statically.
+                    Each bytecode instruction is carried out by a small piece of native code called a handler, and the interpreter has
+                    to jump from one handler to the next. According to his analysis, dispatch goes through a handler table: each handler
+                    computes the address of the next one and jumps there by pushing it onto the stack and executing <code>ret</code>.
+                    Normally <code>ret</code> means "go back to whoever called me"; used like this it becomes a jump whose destination
+                    only exists while the program runs, which makes control flow miserable to follow statically, that is, by reading
+                    the code without running it.
                     Bytecode words are stored encrypted and decrypted on the fly. And instead of keeping values in tidy virtual
                     registers, Denuvo can <strong>spread a single value across stack slots, bit by bit</strong>. Dunn calls that one his
                     favourite feature, which tells you something about reverse engineers.<sup class="cite"><a href="#src-2">2</a></sup>
@@ -403,19 +418,24 @@
                     On top of that, Dunn found instructions rewritten as <strong>Mixed Boolean-Arithmetic</strong> (MBA) expressions:
                     formulas that mix <code>+</code>, <code>-</code>, <code>*</code> with <code>&amp;</code>, <code>|</code>, <code>^</code>
                     so that something trivial becomes unreadable but stays mathematically identical. A textbook identity:
-                    <code>x + y</code> equals <code>(x ^ y) + 2·(x &amp; y)</code>. Now chain dozens of those, and a plain
-                    <code>mov rax, rbx</code> turns into a page of boolean soup. Dunn used the Z3 theorem prover to confirm that the
+                    <code>x + y</code> equals <code>(x ^ y) + 2*(x &amp; y)</code>. Now chain dozens of those, and a plain
+                    <code>mov rax, rbx</code> turns into a page of boolean soup. Dunn used the Z3 theorem prover, a solver that can check whether two formulas give the same result for every
+                    possible input, to confirm that the
                     rewritten expressions really are equivalent to the originals.<sup class="cite"><a href="#src-2">2</a></sup>
                     Amusingly, Denuvo's own researchers also publish on the other side of the problem: SiMBA, a fast algorithm to
                     <em>simplify</em> linear MBA expressions, came out of Denuvo GmbH in 2022.<sup class="cite"><a href="#src-9">9</a></sup>
                     If you build the maze, you'd better know how to solve it.
                 </p>
                 <p>
-                    Two more details from Dunn's write-up that I really like. First, Denuvo needs randomness but doesn't trust <code>RDRAND</code> or OS APIs,
+                    Two more details from Dunn's write-up that I really like. First, Denuvo needs randomness but doesn't trust <code>RDRAND</code> (the CPU's built-in
+                    random number instruction) or OS APIs,
                     which are easy to fake. It uses values already sitting in native registers instead, which are basically guaranteed
-                    to change (in a game they can depend on anything, down to your character losing health), and does modular arithmetic on them to pick between <strong>nine semantically identical CPUID handlers</strong>.
+                    to change (in a game they can depend on anything, down to your character losing health), and does modular arithmetic on them to pick between <strong>nine semantically identical CPUID handlers</strong>
+                    (<code>CPUID</code> is the instruction a program uses to ask the processor its make, model and features, one of
+                    the main fingerprint ingredients).
                     Patch one and the next run may take another. Second, the <code>CPUID</code> instruction itself is kept encrypted:
-                    the VM decrypts it, runs it and re-encrypts it, behind a spinlock that is, of course, also encrypted.<sup class="cite"><a href="#src-2">2</a></sup>
+                    the VM decrypts it, runs it and re-encrypts it, behind a spinlock (a lock that makes other threads wait in a loop
+                    until it's released) that is, of course, also encrypted.<sup class="cite"><a href="#src-2">2</a></sup>
                     Tracing the decryption of a single constant took Dunn's tooling over ten million x86 instructions.
                 </p>
             </section>
@@ -427,19 +447,26 @@
                     usual reverse engineering toolbox breaks itself:
                 </p>
                 <p>
-                    Dunn describes <strong>CRC checks</strong> that scan critical VM handlers, like the ones that execute <code>CPUID</code> and
-                    <code>SYSCALL</code>, for modifications. Constants are also derived from <strong>arbitrary byte ranges of the
-                    protected section</strong>, so a software breakpoint or an inline hook silently changes the result of some
-                    unrelated calculation later.<sup class="cite"><a href="#src-2">2</a></sup> You don't get an error. You get a crash
+                    Dunn describes <strong>CRC checks</strong> (checksums: a short number computed from a block of code that changes if
+                    a single byte does) that scan critical VM handlers, like the ones that execute <code>CPUID</code> and
+                    <code>SYSCALL</code> (the instruction that hands a request to the Windows kernel), for modifications. Constants are also derived from <strong>arbitrary byte ranges of the
+                    protected section</strong>. That matters because the two most common ways of poking at a program both write into
+                    its code: a debugger sets a software breakpoint by replacing an instruction with one that stops the program, and an
+                    inline hook overwrites the start of a function with a jump to the attacker's code. Either one silently changes the
+                    result of some unrelated calculation later.<sup class="cite"><a href="#src-2">2</a></sup> You don't get an error. You get a crash
                     ten minutes into the game, in a different function, which is much worse.
                 </p>
                 <p>
-                    Then there's the stack. Dunn and Heumann both found that Denuvo stores important data above and below the stack pointer, in space that normal
-                    code would consider free. When an exception fires, for a hardware breakpoint for example, Windows writes an
-                    <code>EXCEPTION_RECORD</code> right there and overwrites it.<sup class="cite"><a href="#src-2">2</a>,<a href="#src-3">3</a></sup>
+                    Then there's the stack, the area of memory where a program keeps local variables and return addresses, with the
+                    stack pointer marking where the part in use ends. Dunn and Heumann both found that Denuvo stores important data above
+                    and below the stack pointer, in space that normal code would consider free. When an exception fires, for a hardware
+                    breakpoint for example (one set through the CPU's debug registers, precisely so the code doesn't have to be
+                    modified), Windows writes an <code>EXCEPTION_RECORD</code>, its description of what just happened, right there and
+                    overwrites it.<sup class="cite"><a href="#src-2">2</a>,<a href="#src-3">3</a></sup>
                     Heumann put it plainly: this "makes hardware breakpoints and many other techniques either extremely difficult to
                     use, or even impossible". He ended up writing his own small debugger that swallows those exceptions before they
-                    reach the game, and using a hypervisor for EPT hooks where patching was too tedious. Total count: around
+                    reach the game, and using a hypervisor for EPT hooks where patching was too tedious. EPT is the CPU feature a hypervisor uses to
+                    control how the system sees memory, so it can redirect execution without changing a single byte the game can read. Total count: around
                     <strong>2,000 hooks and patches</strong>, just to get the game to the start screen on a second machine.<sup class="cite"><a href="#src-3">3</a></sup>
                 </p>
                 <p>
@@ -547,7 +574,7 @@
             <p class="outro">
                 What I respect about Denuvo, as an engineer, is that it never pretended to solve an unsolvable problem. It took a
                 fight it was always going to lose eventually and made it slow, expensive and painful enough to matter commercially.
-                That's not nothing. In security, buying time on purpose is a legitimate strategy, as long as you know that's what
+                In security, buying time on purpose is a legitimate strategy, as long as you know that's what
                 you're buying.
             </p>
 
@@ -572,7 +599,7 @@
     <footer>
         <div class="wrap">
             <span>© 2026 José Antonio Nicolás Navarro</span>
-            <a href="../index.html">← back to home</a>
+            <a href="index.html">← back</a>
         </div>
     </footer>
 

@@ -269,7 +269,7 @@
             <header class="post-head">
                 <div class="sec-label">BLOG // DEEP DIVE</div>
                 <h1>Lying from Ring -1: <span class="grad">the Denuvo Hypervisor Bypass</span></h1>
-                <div class="meta">October 2, 2026 · José Antonio Nicolás Navarro</div>
+                <div class="meta">October 2, 2026 | José Antonio Nicolás Navarro</div>
                 <p class="lead">
                     For about a decade, Denuvo ran on a simple and honestly rather elegant business model: make cracking
                     a game so tedious that, by the time someone finished, everyone who wanted it had already bought it.
@@ -294,7 +294,8 @@
                 <h2><span>01</span>Denuvo in thirty seconds</h2>
                 <p>
                     Denuvo Anti-Tamper, owned by Irdeto, is not the kind of DRM that checks your license once and goes back to
-                    sleep. It gets woven into the game binary itself: chunks of code are transformed and virtualized, and
+                    sleep. It gets woven into the game binary itself: chunks of code are transformed and virtualized (translated into
+                    instructions for a made-up CPU that only Denuvo's own interpreter understands), and
                     integrity checks, the so-called triggers, are sprinkled through the game and fire while you play.
                 </p>
                 <p>
@@ -313,22 +314,25 @@
             <section class="prose">
                 <h2><span>02</span>A hypervisor, briefly</h2>
                 <p>
-                    Modern CPUs come with hardware virtualization (Intel VT-x, AMD-V), which lets a hypervisor run whole
-                    operating systems as guests. It sits at what people call <strong>Ring -1</strong>: below the Windows kernel
-                    (Ring 0), which in turn sits below your applications (Ring 3). If the kernel is the landlord, the hypervisor
+                    Modern CPUs run code at different privilege levels, called rings. Your applications live in <strong>Ring 3</strong>,
+                    the least trusted: they can't touch the hardware or other programs' memory directly, and have to ask the operating
+                    system for almost everything. The Windows kernel lives in <strong>Ring 0</strong>, with full control of the machine.
+                    On top of that, CPUs come with hardware virtualization (Intel VT-x, AMD-V), which lets a hypervisor run whole
+                    operating systems as guests, each one convinced it has the machine to itself. The hypervisor sits at what people
+                    call <strong>Ring -1</strong>, below the kernel, and code at one level can't see or overrule what happens below it. If the kernel is the landlord, the hypervisor
                     owns the building. The landlord believes he's in charge. He is mistaken.
                 </p>
                 <p>
                     The relevant trick is that a hypervisor can tell the CPU: "whenever the guest runs <em>this</em>
                     instruction, stop and ask me first". That's a <strong>VM exit</strong>. Control jumps to the hypervisor,
-                    which looks at the request, decides what the guest gets to see, and quietly resumes it. The textbook example
+                    which looks at the request, decides what the guest gets to see, and quietly resumes it (a <strong>VM entry</strong>). The textbook example
                     is <code>CPUID</code>, the instruction software uses to ask the processor who and what it is. From inside the
                     guest, nothing looks different. That's the whole point of virtualization. As it turns out, it's also the whole
                     point of this bypass.
                 </p>
                 <figure class="fig">
                     <div class="fig-scroll"><svg viewBox="0 0 600 296" role="img" aria-label="Privilege stack: normally the game runs on Windows directly on the CPU; with the bypass, a custom hypervisor sits between Windows and the CPU."><text class="d-h" x="145" y="26" text-anchor="middle">Normal</text><text class="d-h" x="455" y="26" text-anchor="middle">With the bypass</text><rect class="d-box" x="20" y="44" width="250" height="52" rx="8"/><text class="d-t" x="34" y="67">Game + Denuvo</text><text class="d-s" x="34" y="85">asks: what machine is this?</text><text class="d-r" x="258" y="67" text-anchor="end">Ring 3</text><rect class="d-box" x="20" y="106" width="250" height="52" rx="8"/><text class="d-t" x="34" y="129">Windows kernel</text><text class="d-r" x="258" y="129" text-anchor="end">Ring 0</text><rect class="d-box hw" x="20" y="168" width="250" height="52" rx="8"/><text class="d-t" x="34" y="191">CPU / hardware</text><text class="d-s" x="34" y="209">answers truthfully</text><rect class="d-box" x="330" y="44" width="250" height="52" rx="8"/><text class="d-t" x="344" y="67">Game + Denuvo</text><text class="d-s" x="344" y="85">asks the same questions</text><text class="d-r" x="568" y="67" text-anchor="end">Ring 3</text><rect class="d-box" x="330" y="106" width="250" height="52" rx="8"/><text class="d-t" x="344" y="129">Windows kernel</text><text class="d-s" x="344" y="147">now a guest, unaware</text><text class="d-r" x="568" y="129" text-anchor="end">Ring 0</text><rect class="d-box hot" x="330" y="168" width="250" height="52" rx="8"/><text class="d-t" x="344" y="191">Custom hypervisor</text><text class="d-s" x="344" y="209">intercepts and answers</text><text class="d-r alert" x="568" y="191" text-anchor="end">Ring -1</text><rect class="d-box hw" x="330" y="230" width="250" height="52" rx="8"/><text class="d-t" x="344" y="253">CPU / hardware</text><text class="d-s" x="344" y="271">never asked directly</text></svg></div>
-                    <figcaption>Fig. 1 · Same game, same questions. Different entity answering them.</figcaption>
+                    <figcaption>Fig. 1. Same game, same questions. Different entity answering them.</figcaption>
                 </figure>
             </section>
 
@@ -349,7 +353,8 @@
                 <p>
                     The idea wasn't new, either. In January 2025, reverse engineer Connor-Jay Dunn closed a detailed analysis of
                     Denuvo by suggesting that a hypervisor could spoof all the hardware information it relies on, while warning that
-                    faking the <code>ntdll</code> and <code>KUSER_SHARED_DATA</code> checks without side effects would be the hard
+                    faking the <code>ntdll</code> (the lowest layer of user-mode Windows, the library that actually hands requests to
+                    the kernel) and <code>KUSER_SHARED_DATA</code> (more on that below) checks without side effects would be the hard
                     part.<sup class="cite"><a href="#src-12">12</a></sup> His write-up also lists <code>CPUID</code>, raw syscalls
                     and <code>KUSER_SHARED_DATA</code> among the fingerprint sources, which is exactly the list of things the
                     bypass ended up lying about.
@@ -367,9 +372,11 @@
                 <h2><span>04</span>What exactly is being lied about</h2>
                 <p>
                     According to XDA Developers' analysis, the full stack touches every privilege level of the machine. At the bottom,
-                    an optional boot-time component switches off PatchGuard, Driver Signature Enforcement and VBS before Windows
-                    even loads, so an unsigned hypervisor can get in and kernel structures can be edited without anyone
-                    complaining. At the top, a Steam emulator handles the ownership questions, which is the most boring part of
+                    an optional boot-time component switches off PatchGuard (Windows' watchdog, which crashes the system if someone
+                    modifies core kernel structures), Driver Signature Enforcement (which only lets properly signed drivers load) and VBS
+                    (more on that in section 06) before Windows even loads, so an unsigned hypervisor can get in and kernel structures can be edited without anyone
+                    complaining. At the top, a Steam emulator (a stand-in for the library games use to talk to
+                    Steam) handles the ownership questions, which is the most boring part of
                     the whole thing and a problem the scene solved years ago.<sup class="cite"><a href="#src-4">4</a></sup> The interesting work happens in the middle, at
                     Ring -1, and it's mostly a list of questions Denuvo is no longer allowed to get honest answers to.
                 </p>
@@ -380,13 +387,14 @@
                     about whether you're lying: a classic.
                 </p>
                 <figure class="fig">
-                    <div class="fig-scroll"><svg viewBox="0 0 600 320" role="img" aria-label="Sequence: Denuvo executes CPUID, the CPU exits to the hypervisor, the hypervisor replaces the real answer with the expected one and resumes the guest, and Denuvo sees a matching fingerprint."><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box " x="20" y="12" width="160" height="36" rx="8"/><text class="d-t" x="100" y="35" text-anchor="middle">Denuvo (game)</text><line class="d-life" x1="100" y1="48" x2="100" y2="312"/><rect class="d-box hw" x="220" y="12" width="160" height="36" rx="8"/><text class="d-t" x="300" y="35" text-anchor="middle">CPU</text><line class="d-life" x1="300" y1="48" x2="300" y2="312"/><rect class="d-box hot" x="420" y="12" width="160" height="36" rx="8"/><text class="d-t" x="500" y="35" text-anchor="middle">Hypervisor</text><line class="d-life" x1="500" y1="48" x2="500" y2="312"/><line class="d-arrow " x1="100" y1="92" x2="296" y2="92" marker-end="url(#arr2)"/><text class="d-l" x="198.0" y="84" text-anchor="middle">1 · CPUID</text><line class="d-arrow " x1="300" y1="140" x2="496" y2="140" marker-end="url(#arr2)"/><text class="d-l" x="398.0" y="132" text-anchor="middle">2 · VM exit</text><rect class="d-box hot solid" x="398" y="160" width="196" height="66" rx="8"/><text class="d-m alert" x="410" y="184">real: your actual CPU</text><text class="d-m ok" x="410" y="212">sent: the expected CPU</text><line class="d-arrow hot" x1="500" y1="262" x2="104" y2="262" marker-end="url(#arr2h)"/><text class="d-l" x="302.0" y="254" text-anchor="middle">3 · VM entry: spoofed values</text><text class="d-m ok" x="24" y="300">✓ fingerprint matches token</text></svg></div>
-                    <figcaption>Fig. 2 · A single intercepted CPUID. The check runs correctly; its input doesn't.</figcaption>
+                    <div class="fig-scroll"><svg viewBox="0 0 600 320" role="img" aria-label="Sequence: Denuvo executes CPUID, the CPU exits to the hypervisor, the hypervisor replaces the real answer with the expected one and resumes the guest, and Denuvo sees a matching fingerprint."><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker><marker id="arr2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head hot"/></marker></defs><rect class="d-box " x="20" y="12" width="160" height="36" rx="8"/><text class="d-t" x="100" y="35" text-anchor="middle">Denuvo (game)</text><line class="d-life" x1="100" y1="48" x2="100" y2="312"/><rect class="d-box hw" x="220" y="12" width="160" height="36" rx="8"/><text class="d-t" x="300" y="35" text-anchor="middle">CPU</text><line class="d-life" x1="300" y1="48" x2="300" y2="312"/><rect class="d-box hot" x="420" y="12" width="160" height="36" rx="8"/><text class="d-t" x="500" y="35" text-anchor="middle">Hypervisor</text><line class="d-life" x1="500" y1="48" x2="500" y2="312"/><line class="d-arrow " x1="100" y1="92" x2="296" y2="92" marker-end="url(#arr2)"/><text class="d-l" x="198.0" y="84" text-anchor="middle">1. CPUID</text><line class="d-arrow " x1="300" y1="140" x2="496" y2="140" marker-end="url(#arr2)"/><text class="d-l" x="398.0" y="132" text-anchor="middle">2. VM exit</text><rect class="d-box hot solid" x="398" y="160" width="196" height="66" rx="8"/><text class="d-m alert" x="410" y="184">real: your actual CPU</text><text class="d-m ok" x="410" y="212">sent: the expected CPU</text><line class="d-arrow hot" x1="500" y1="262" x2="104" y2="262" marker-end="url(#arr2h)"/><text class="d-l" x="302.0" y="254" text-anchor="middle">3. VM entry: spoofed values</text><text class="d-m ok" x="24" y="300">✓ fingerprint matches token</text></svg></div>
+                    <figcaption>Fig. 2. A single intercepted CPUID. The check runs correctly; its input doesn't.</figcaption>
                 </figure>
                 <p>
                     Then there's timing. VM exits aren't free; Xen developer Keir Fraser estimated each one at around a thousand
                     cycles<sup class="cite"><a href="#src-7">7</a></sup>, and a program that
-                    times instructions which should be instant (with <code>RDTSC</code>, say) can notice the detour. So, according to
+                    times instructions which should be instant, by reading the CPU's cycle counter with <code>RDTSC</code> before
+                    and after, can notice the detour. So, according to
                     XDA, the bypass also hides that detour from the clock. If the clock says nothing
                     happened, nothing happened.<sup class="cite"><a href="#src-4">4</a></sup>
                 </p>
@@ -398,14 +406,18 @@
                     exactly what happens.<sup class="cite"><a href="#src-5">5</a></sup>
                 </p>
                 <p>
-                    Protections also like to skip the Windows API and make <strong>direct syscalls</strong>, talking to the
-                    kernel without going through anything that could be hooked in user mode. Very sensible. Unfortunately, the
+                    A syscall is how a program asks the kernel to do something for it, like opening a file or reporting system
+                    information. Normally that request passes through several layers of Windows libraries, and any of them can be
+                    hooked to return a fake answer. So protections like to skip the Windows API and make <strong>direct syscalls</strong>,
+                    talking to the kernel without going through anything that could be hooked in user mode. Very sensible. Unfortunately, the
                     hypervisor is not a user-mode hook, and according to the same write-up it sees those transitions anyway.<sup class="cite"><a href="#src-5">5</a></sup>
                 </p>
                 <p>
-                    And finally <code>SGDT</code>, an old instruction that reveals where the CPU's global descriptor table lives
-                    in memory. It's a sibling of <code>SIDT</code>, the instruction behind Joanna Rutkowska's "Red Pill", one of the
-                    first VM detection tricks, from around 2004 and now old enough to rent a car.<sup class="cite"><a href="#src-8">8</a>,<a href="#src-9">9</a></sup> Values like these differ
+                    And finally <code>SGDT</code>, an old instruction that reveals where the CPU's global descriptor table (one of
+                    the tables the kernel sets up at boot to describe memory to the processor) lives in memory. It's a sibling of <code>SIDT</code>, the instruction behind Joanna Rutkowska's "Red Pill", one of the
+                    first VM detection tricks, from around 2004 and now old enough to rent a car.<sup class="cite"><a href="#src-8">8</a>,<a href="#src-9">9</a></sup>
+                    The idea behind Red Pill was simple: early virtual machines had to keep these tables at different addresses than a
+                    real machine would, so just reading the address told you where you were. Values like these differ
                     between real and virtualized machines, so <code>SGDT</code> works as both a fingerprint input and a hypervisor
                     detector, and, per the same write-up, it gets emulated too.<sup class="cite"><a href="#src-5">5</a></sup>
                 </p>
@@ -423,7 +435,9 @@
                     173 working games, Steam Deck included.<sup class="cite"><a href="#src-6">6</a></sup> And the funny part is how little of it needs a hypervisor at all.
                 </p>
                 <p>
-                    Think about it: on Linux, the game is <em>already</em> running inside a fake Windows. Wine, with all due
+                    Think about it: on Linux, the game is <em>already</em> running inside a fake Windows. Proton, the compatibility
+                    layer Valve ships with Steam, is built on Wine, which runs Windows programs by reimplementing the Windows API on
+                    top of Linux. Wine, with all due
                     respect to the people who've spent decades building it, is a very elaborate and very well-intentioned lie.
                     According to crackrelease.com, the bypass just adds a few more lines to the script, from inside the game's own process:
                 </p>
@@ -431,23 +445,27 @@
                     <table>
                         <thead><tr><th>Check</th><th>Windows (hypervisor)</th><th>Linux (Proton/Wine)</th></tr></thead>
                         <tbody>
-                            <tr><td><code>CPUID</code></td><td>Trapped via VM exit at Ring -1</td><td><strong>CPUID faulting</strong>, a documented CPU feature that lets the answer come from inside the process.</td></tr>
+                            <tr><td><code>CPUID</code></td><td>Trapped via VM exit at Ring -1</td><td><strong>CPUID faulting</strong>, a documented CPU feature that makes <code>CPUID</code> trap instead of answering, so the answer can come from inside the process.</td></tr>
                             <tr><td><code>KUSER_SHARED_DATA</code></td><td>Edited from below the OS</td><td>Wine emulates this page itself.</td></tr>
-                            <tr><td>Direct syscalls</td><td>Seen by the hypervisor</td><td>Linux's <strong>Syscall User Dispatch</strong>, which Wine already uses for games that make raw Windows syscalls.</td></tr>
-                            <tr><td><code>SGDT</code></td><td>Emulated by the hypervisor</td><td>The weak spot: a Linux hardening feature (<strong>UMIP</strong>) gets in the way.<sup class="cite"><a href="#src-5">5</a></sup></td></tr>
+                            <tr><td>Direct syscalls</td><td>Seen by the hypervisor</td><td>Linux's <strong>Syscall User Dispatch</strong>, a kernel feature that sends a process's syscalls to a handler inside that same process, which Wine already uses for games that make raw Windows syscalls.</td></tr>
+                            <tr><td><code>SGDT</code></td><td>Emulated by the hypervisor</td><td>The weak spot: a Linux hardening feature (<strong>UMIP</strong>, which blocks <code>SGDT</code> and similar instructions in regular programs) gets in the way.<sup class="cite"><a href="#src-5">5</a></sup></td></tr>
                         </tbody>
                     </table>
                 </div>
                 <p>
                     CPUID faulting is the piece that decides whether you still need a hypervisor. It's a documented CPU feature
                     that Linux exposes per process. As rr's author Robert O'Callahan explained, it was originally added in kernel 4.12
-                    for something deeply unglamorous: the rr record-and-replay debugger.<sup class="cite"><a href="#src-10">10</a></sup> It's now enjoying an unexpected second career. According to crackrelease.com, recent Intel CPUs have it, and so does AMD from Zen 4
+                    for something deeply unglamorous: the rr record-and-replay debugger, which
+                    records a program's execution so it can be replayed exactly, and needs to control what <code>CPUID</code> returns
+                    for the replay to match.<sup class="cite"><a href="#src-10">10</a></sup> It's now enjoying an unexpected second career. According to crackrelease.com, recent Intel CPUs have it, and so does AMD from Zen 4
                     with a recent kernel. Older Ryzen chips, Steam Deck included, don't, and reportedly still rely on a hypervisor
-                    to fake it.<sup class="cite"><a href="#src-5">5</a></sup>
+                    to fake it.<sup class="cite"><a href="#src-5">5</a></sup> When it's available, executing <code>CPUID</code> makes the
+                    kernel send the process a signal (Linux's way of interrupting a program to tell it something happened, here
+                    <code>SIGSEGV</code>), and a handler registered inside the Wine process catches it and supplies the answer.
                 </p>
                 <figure class="fig">
-                    <div class="fig-scroll"><svg viewBox="0 0 600 240" role="img" aria-label="Linux flow: the game executes CPUID, the CPU faults, the kernel delivers SIGSEGV to a handler inside the Wine process, which writes the expected values and resumes the game."><defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker></defs><rect class="d-zone" x="12" y="8" width="238" height="222" rx="12"/><text class="d-s" x="28" y="28">inside the game's process</text><rect class="d-box" x="30" y="40" width="200" height="56" rx="8"/><text class="d-t" x="44" y="63">Game + Denuvo</text><text class="d-s" x="44" y="81">runs CPUID</text><rect class="d-box hot" x="30" y="154" width="200" height="56" rx="8"/><text class="d-t" x="44" y="177">Wine signal handler</text><text class="d-s" x="44" y="195">fills in expected values</text><rect class="d-box hw" x="370" y="40" width="210" height="56" rx="8"/><text class="d-t" x="384" y="63">CPU</text><text class="d-s" x="384" y="81">CPUID faulting enabled</text><rect class="d-box" x="370" y="154" width="210" height="56" rx="8"/><text class="d-t" x="384" y="177">Linux kernel</text><text class="d-s" x="384" y="195">turns the fault into a signal</text><line class="d-arrow" x1="230" y1="68" x2="366" y2="68" marker-end="url(#arr3)"/><text class="d-l" x="298" y="60" text-anchor="middle">1 · CPUID</text><line class="d-arrow" x1="475" y1="96" x2="475" y2="150" marker-end="url(#arr3)"/><text class="d-l" x="485" y="128">2 · fault</text><line class="d-arrow" x1="370" y1="182" x2="234" y2="182" marker-end="url(#arr3)"/><text class="d-l" x="302" y="174" text-anchor="middle">3 · SIGSEGV</text><line class="d-arrow hot" x1="130" y1="154" x2="130" y2="100" marker-end="url(#arr3)"/><text class="d-l" x="140" y="132">4 · resume</text></svg></div>
-                    <figcaption>Fig. 3 · The Linux version of the same lie. No Ring -1: the answer comes from inside the process.</figcaption>
+                    <div class="fig-scroll"><svg viewBox="0 0 600 240" role="img" aria-label="Linux flow: the game executes CPUID, the CPU faults, the kernel delivers SIGSEGV to a handler inside the Wine process, which writes the expected values and resumes the game."><defs><marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker></defs><rect class="d-zone" x="12" y="8" width="238" height="222" rx="12"/><text class="d-s" x="28" y="28">inside the game's process</text><rect class="d-box" x="30" y="40" width="200" height="56" rx="8"/><text class="d-t" x="44" y="63">Game + Denuvo</text><text class="d-s" x="44" y="81">runs CPUID</text><rect class="d-box hot" x="30" y="154" width="200" height="56" rx="8"/><text class="d-t" x="44" y="177">Wine signal handler</text><text class="d-s" x="44" y="195">fills in expected values</text><rect class="d-box hw" x="370" y="40" width="210" height="56" rx="8"/><text class="d-t" x="384" y="63">CPU</text><text class="d-s" x="384" y="81">CPUID faulting enabled</text><rect class="d-box" x="370" y="154" width="210" height="56" rx="8"/><text class="d-t" x="384" y="177">Linux kernel</text><text class="d-s" x="384" y="195">turns the fault into a signal</text><line class="d-arrow" x1="230" y1="68" x2="366" y2="68" marker-end="url(#arr3)"/><text class="d-l" x="298" y="60" text-anchor="middle">1. CPUID</text><line class="d-arrow" x1="475" y1="96" x2="475" y2="150" marker-end="url(#arr3)"/><text class="d-l" x="485" y="128">2. fault</text><line class="d-arrow" x1="370" y1="182" x2="234" y2="182" marker-end="url(#arr3)"/><text class="d-l" x="302" y="174" text-anchor="middle">3. SIGSEGV</text><line class="d-arrow hot" x1="130" y1="154" x2="130" y2="100" marker-end="url(#arr3)"/><text class="d-l" x="140" y="132">4. resume</text></svg></div>
+                    <figcaption>Fig. 3. The Linux version of the same lie. No Ring -1: the answer comes from inside the process.</figcaption>
                 </figure>
                 <p>
                     That contrast is the real takeaway. On Windows, telling a convincing lie meant going below the kernel and
@@ -475,7 +493,8 @@
                 <p>
                     What you're left with is a machine where the most privileged code running is a binary someone downloaded from
                     a forum, sitting below the OS and below any antivirus that might have had an opinion about it. Joanna
-                    Rutkowska demonstrated exactly this scenario as a hypothetical rootkit, Blue Pill, back in 2006.<sup class="cite"><a href="#src-11">11</a></sup> Twenty years
+                    Rutkowska demonstrated exactly this scenario as a hypothetical rootkit (malware built to hide from the operating
+                    system and the security tools running on it), Blue Pill, back in 2006.<sup class="cite"><a href="#src-11">11</a></sup> Twenty years
                     later, people are installing it voluntarily to save seventy euros. That's a bold risk assessment.
                 </p>
                 <p>
@@ -492,7 +511,8 @@
                     games impacted by hypervisor bypasses" and that performance won't suffer.<sup class="cite"><a href="#src-2">2</a></sup> It also reportedly said the fix won't
                     involve Denuvo itself moving to Ring -1 or deeper into the kernel,<sup class="cite"><a href="#src-2">2</a></sup> which is reassuring, because the only thing
                     worse than a DRM in your kernel would be a DRM in your hypervisor. According to Wikipedia, in September 2026 the company also took
-                    the legal route and filed a DMCA anti-circumvention lawsuit against one of the people behind the releases.<sup class="cite"><a href="#src-1">1</a></sup>
+                    the legal route and filed a DMCA anti-circumvention lawsuit (under the US law that makes
+                    bypassing copy protection illegal in itself) against one of the people behind the releases.<sup class="cite"><a href="#src-1">1</a></sup>
                 </p>
                 <p>
                     Technically, the options for spotting a hidden hypervisor are well known, and none of them are great. Checking
@@ -555,7 +575,7 @@
     <footer>
         <div class="wrap">
             <span>© 2026 José Antonio Nicolás Navarro</span>
-            <a href="../index.html">← back to home</a>
+            <a href="index.html">← back</a>
         </div>
     </footer>
 
