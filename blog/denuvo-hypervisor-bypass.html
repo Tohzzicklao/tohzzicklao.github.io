@@ -8,27 +8,27 @@
     <meta property="og:description" content="An educational look at the hypervisor-based Denuvo bypass.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://tohzzicklao.github.io/blog/denuvo-hypervisor-bypass.html">
-    <meta name="theme-color" content="#05080d">
+    <meta name="theme-color" content="#14161a">
     <link rel="canonical" href="https://tohzzicklao.github.io/blog/denuvo-hypervisor-bypass.html">
     <title>The Denuvo Hypervisor Bypass | José Antonio Nicolás</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2305080d'/%3E%3Cpath d='M50 14 82 26v24c0 19-13 31-32 37C31 81 18 69 18 50V26z' fill='none' stroke='%2300f0b5' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='8' fill='%237c5cff'/%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2314161a'/%3E%3Ctext x='50' y='66' font-family='Arial,sans-serif' font-size='46' font-weight='700' text-anchor='middle' fill='%237fa8c9'%3EJA%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #05080d;
-            --panel: rgba(12, 18, 28, 0.72);
-            --line: rgba(0, 240, 181, 0.12);
-            --line-strong: rgba(0, 240, 181, 0.35);
+            --bg: #14161a;
+            --panel: rgba(26, 29, 34, 0.72);
+            --line: rgba(255, 255, 255, 0.08);
+            --line-strong: rgba(255, 255, 255, 0.2);
             --text: #e6edf5;
             --muted: #8794a6;
             --dim: #566275;
-            --cyber: #00f0b5;
-            --neural: #7c5cff;
-            --alert: #ff4d6d;
-            --glow-c: rgba(0, 240, 181, 0.25);
-            --glow-n: rgba(124, 92, 255, 0.25);
+            --cyber: #7fa8c9;
+            --neural: #a0a8b8;
+            --alert: #d97a7a;
+            --glow-c: transparent;
+            --glow-n: transparent;
             --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
             --display: 'Space Grotesk', 'Inter', sans-serif;
             --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
@@ -57,11 +57,11 @@
             word-break: break-word;
         }
 
-        .bg-glow {
+        .bg-glow { display: none;
             position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background:
                 radial-gradient(600px 400px at 15% 10%, var(--glow-n), transparent 70%),
-                radial-gradient(700px 500px at 90% 40%, rgba(0, 240, 181, 0.10), transparent 70%);
+                radial-gradient(700px 500px at 90% 40%, rgba(127, 168, 201, 0.10), transparent 70%);
         }
         main, footer, .nav { position: relative; z-index: 1; }
 
@@ -72,7 +72,7 @@
             display: flex; align-items: center; justify-content: space-between;
             gap: 1rem;
             padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
-            background: rgba(5, 8, 13, 0.7);
+            background: rgba(20, 22, 26, 0.7);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--line);
@@ -121,7 +121,7 @@
             margin-bottom: 1rem;
         }
         h1 .grad {
-            background: linear-gradient(100deg, var(--cyber) 0%, #5fd4ff 45%, var(--neural) 100%);
+            background: linear-gradient(100deg, var(--cyber) 0%, #9fb8d0 45%, var(--neural) 100%);
             -webkit-background-clip: text; background-clip: text;
             color: transparent;
         }
@@ -205,7 +205,7 @@
         .fig svg { display: block; width: 100%; min-width: 520px; height: auto; }
         .fig figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); margin-top: 0.6rem; text-align: center; }
         .d-box { fill: rgba(255,255,255,0.025); stroke: var(--line-strong); stroke-width: 1.2; }
-        .d-box.hw { fill: rgba(124,92,255,0.07); stroke: rgba(124,92,255,0.5); }
+        .d-box.hw { fill: rgba(160, 168, 184, 0.07); stroke: rgba(160, 168, 184, 0.5); }
         .d-box.hot { fill: rgba(255,77,109,0.08); stroke: rgba(255,77,109,0.6); }
         .d-box.solid { fill: #1a0d14; }
         .d-zone { fill: none; stroke: var(--dim); stroke-width: 1.2; stroke-dasharray: 5 5; }
@@ -250,7 +250,7 @@
             body { background: #fff; color: #111; }
             strong, h1 .grad { color: #111; -webkit-text-fill-color: #111; }
             .panel { background: none; border-color: #ccc; backdrop-filter: none; break-inside: avoid; }
-            .fig-scroll { background: #05080d; }
+            .fig-scroll { background: #14161a; }
             p, li, .meta { color: #333 !important; }
         }
     </style>
